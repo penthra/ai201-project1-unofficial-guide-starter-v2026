@@ -25,6 +25,7 @@ your pipeline, not giving up.
 from dataclasses import dataclass
 
 import config
+import re
 from ingest import Document
 
 
@@ -81,23 +82,42 @@ def fallback_split(
 
 
 def split_documents(documents: list[Document]) -> list[Chunk]:
-    """
-    Split documents into chunks. ⚠️ REPLACE THE BODY OF THIS IN MILESTONE 3.
+    """Split by paragraph, keeping the title in every chunk."""
+    chunks: list[Chunk] = []
 
-    Right now it just calls the fallback. That is the plain, generic behaviour
-    the brief is talking about.
+    for doc in documents:
+        paragraphs = [
+            paragraph.strip()
+            for paragraph in re.split(r"\n\s*\n", doc.text)
+            if paragraph.strip()
+        ]
 
-    When you write your own strategy, set `produced_by` to
-    "chunker.py::split_documents" so your README's Sample Chunks section names
-    the right function. `app.py chunks` prints that string for you.
+        if not paragraphs:
+            continue
 
-    Things worth thinking about before you write any code:
-      - Are your documents short posts or long guides?
-      - Is the useful information in one sentence, or spread over a paragraph?
-      - Would splitting on paragraph breaks keep more thoughts intact than
-        splitting on a character count?
-    """
-    return fallback_split(documents)
+        title = paragraphs[0]
+        body_paragraphs = paragraphs[1:]
+
+        # If there is only one paragraph, keep it whole.
+        if not body_paragraphs:
+            pieces = [title]
+        else:
+            pieces = [
+                f"{title}\n\n{paragraph}"
+                for paragraph in body_paragraphs
+            ]
+
+        for index, piece in enumerate(pieces):
+            chunks.append(
+                Chunk(
+                    text=piece,
+                    source=doc.source,
+                    index=index,
+                    produced_by="chunker.py::split_documents",
+                )
+            )
+
+    return chunks
 
 
 def describe(chunks: list[Chunk]) -> str:

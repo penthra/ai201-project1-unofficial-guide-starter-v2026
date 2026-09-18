@@ -25,6 +25,7 @@ contains the answer.
 **Why this target:**
 <!-- e.g. "One of my questions is about a topic only two documents mention, so
      I expect that one to be hard." -->
+My questions ask about facts in the corpus, so retrieval should find the needed information for most of them. I accept one missed question as something to improve, but missing two or more would mean the system struggles with too many of my basic questions.
 
 ---
 
@@ -35,6 +36,8 @@ Every answer the system produces names at least one source document.
 **Why this target:**
 <!-- Why all five and not four? What about your setup makes that achievable —
      or what would have to go wrong for it not to be? -->
+	 
+Every answer should name a source so I can check its validity. Answers without a source are hard to verify, but one document is enough if it supports the answer.
 
 ---
 
@@ -52,11 +55,13 @@ in at least 4 of 5 tries.
 **Why this target:**
 <!-- What did your distances look like when you set the cutoff in Milestone 4?
      Was there a clean gap, or did the two groups overlap? -->
+	 
+The system should recognize whether a question is within the scope of the material and reject unsupported questions to avoid inaccurate answers. I accept one failed rejection as something to improve, but more than one would make me doubt whether the gate works reliably enough.
 
 ---
 
 ## 4. Something about your chunks
-
+At least 4 of the 5 retrieved chunks I inspect should focus on one topic and include enough context to understand the main point without reading another chunk.
 <!-- YOU WRITE THIS ONE.
 
      How would you know if your chunks were the right size? Name something
@@ -72,12 +77,13 @@ in at least 4 of 5 tries.
 
 
 **Why this target:**
-
+I want chunks to stay focused without losing the context needed to understand them. I allow one of five checked chunks to fall short because splitting can leave awkward boundaries, but more failures would mean too many chunks are hard to use on their own.
 
 
 ---
 
 ## 5. Your choice
+For all five test questions, the answer produced by the system must be supported by the retrieved chunks and must not include unsupported information.
 
 <!-- YOU WRITE THIS ONE TOO.
 
@@ -90,6 +96,7 @@ in at least 4 of 5 tries.
 
 
 **Why this target:**
+All five answers should be supported by the retrieved chunks because even one invented detail could mislead me. The wording can differ from the documents, so requiring exact copies would be unnecessarily strict.
 
 
 

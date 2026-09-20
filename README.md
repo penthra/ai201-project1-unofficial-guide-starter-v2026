@@ -1,20 +1,6 @@
 # The Unofficial Guide
 
-<!-- Replace this line with your name and which corpus you picked. -->
-
-> **This file is your submission.** Fill it in as you go — most sections get
-> written during the milestone that produces them, not at the end.
->
-> How the starter works, and every command you'll need, is in `RUNNING.md`.
-> Leave that file alone.
->
-> **Paste everything as text.** No screenshots, no video. A typed table gets
-> full credit; a picture of the same table gets none, because the grader can't
-> read it.
->
-> Delete these instruction blocks as you replace them. The `<!-- -->` comments
-> are notes to you and don't show up when the page renders — you can leave them
-> or remove them.
+Peng Wu — Campus corpus
 
 ---
 
@@ -22,28 +8,16 @@
 
 ## What This Does
 
-<!-- Three or four sentences. Which corpus you picked, and the kinds of
-     questions your system answers. Write it for someone who has never seen
-     this repo.
-
-     Milestone 5. -->
+This project uses a corpus of short campus posts to answer questions about student life, including parking, courses, dining, housing, and campus services. It retrieves relevant chunks and gives them to a language model to produce an answer with sources. A relevance gate checks the best retrieval distance and rejects questions when no chunk is close enough. My five test questions ask about parking permit availability, walking time, midterm exams, dining hours, and Wi-Fi access.
 
 ## Chunking Strategy
 
 Chunk size: Variable—one body paragraph per chunk, with the document title added to each chunk.
 Overlap: No overlap between body paragraphs. The title repeats in each chunk.
 
-my documents are short posts, paragraph boundaries preserve related sentences, and repeating the title helps identify the subject. The first version I produced is title-only chunks, so I revised it to attach titles to body paragraphs.
+My documents are short posts, and their paragraphs often keep related sentences together. I chose paragraph boundaries to avoid cutting sentences in the middle. I repeat the title in each chunk to help identify its subject when it is retrieved without the rest of the document.
 
-<!-- What about YOUR documents made you pick these numbers? Short posts and
-     long sectioned guides don't want the same chunking, and "800 seemed
-     reasonable" earns nothing. Point at something you noticed when you read
-     the documents in Milestone 1.
-
-     If you changed your mind partway through, say so and say why. That's worth
-     more than pretending you got it right first time.
-
-     Milestone 3. -->
+My first version treated titles as separate chunks because they were separated from the body by blank lines. I revised it to attach the title to each body paragraph instead. This strategy assumes the first paragraph of each document is its title.
 
 ## Sample Chunks
 
@@ -84,66 +58,13 @@ The good: cheapest housing tier by about $900 a year, and the singles are real s
 
 ## Sample Answer
 
-<!-- One complete question and answer, pasted as text, with the source line
-     visible. Milestone 4. -->
-python app.py ask "When can students purchase a parking permit?"
-python app.py ask "How long does it take to walk from Fenwick Court to central campus?"
-python app.py ask "How many midterm exams are scheduled for PHYS 130 Mechanics?"
-python app.py ask "What are Halden Hall's weekday serving hours?"
-python app.py ask "What account do students need to access campus Wi-Fi?"
-
-python app.py ask "What is the capital of Mongolia?"
-python app.py ask "How do I change the oil in a diesel engine?"
-python app.py ask "Who won the 1994 World Cup?"
-python app.py ask "What is the recommended dosage of ibuprofen for a headache?"
-python app.py ask "How do I write a for loop in Rust?"
-
-python app.py retrieve "When can students purchase a parking permit?"
-python app.py retrieve "How long does it take to walk from Fenwick Court to central campus?"
-python app.py retrieve "How many midterm exams are scheduled for PHYS 130 Mechanics?"
-python app.py retrieve "What are Halden Hall's weekday serving hours?"
-python app.py retrieve "What account do students need to access campus Wi-Fi?"
-
-python app.py retrieve "What is the capital of Mongolia?"
-python app.py retrieve "How do I change the oil in a diesel engine?"
-python app.py retrieve "Who won the 1994 World Cup?"
-python app.py retrieve "What is the recommended dosage of ibuprofen for a headache?"
-python app.py retrieve "How do I write a for loop in Rust?"
-
 **Question:** "When can students purchase a parking permit?"
 **Answer:** Student permits for the west lots go on sale in August (admin_parking_permits.txt).
 Sources retrieved: admin_library_holds.txt, admin_parking_permits.txt, advising_registration.txt, study_library_hours.txt, transit_shuttle.txt
-
-**Question:** "How long does it take to walk from Fenwick Court to central campus?"
-**Answer:** It takes about 18 minutes on foot to walk from Fenwick Court to central campus.
-Source: `transit_walking.txt` (also mentioned in `housing_fenwick_court.txt`).
-Sources retrieved: housing_fenwick_court.txt, housing_fenwick_court_noise.txt, transit_shuttle.txt, transit_walking.txt
-
-**Question:** "How many midterm exams are scheduled for PHYS 130 Mechanics?"
-**Answer:** There are three midterm exams scheduled for PHYS 130 Mechanics.
-Source: `course_phys_130.txt` (and also found in `course_phys_130_exams.txt`).
-Sources retrieved: course_phys_130.txt, course_phys_130_exams.txt, course_phys_130_workload.txt
-
-**Question:** "What are Halden Hall's weekday serving hours?"
-**Answer:** Halden Hall's weekday hours are 7:30am to 7:00pm (dining_halden_hall.txt).
-Sources retrieved: dining_halden_hall.txt, dining_halden_hall_followup.txt, dining_the_atrium.txt
-
-**Question:** "What account do students need to access campus Wi-Fi?"
-**Answer:** Students need a student account to access campus Wi-Fi. This comes from `admin_wifi_and_accounts.txt`.
-Sources retrieved: admin_wifi_and_accounts.txt, money_jobs.txt, money_textbooks.txt, transit_shuttle.txt
 ```
 ```
 
-**My relevance cutoff:**
-
-<!-- The number you set in config.py, and how you got there.
-
-     You ran five questions your corpus covers and the five in OUT_OF_SCOPE
-     that it clearly doesn't, and wrote down the best distance for each. What
-     did those two groups look like? Where was the gap? Put the actual numbers
-     here — the table below wants all ten rows.
-
-     Milestone 4. -->
+**My relevance cutoff:** 0.6
 
 | Question                                                            | In corpus? | Best distance |
 | ------------------------------------------------------------------- | ---------- | ------------- |
@@ -161,23 +82,12 @@ Sources retrieved: admin_wifi_and_accounts.txt, money_jobs.txt, money_textbooks.
 
 ## How I Used AI
 
-<!-- Two specific moments. For each: what you asked for, what came back, and
-     what you changed about it.
 
-     "I asked Claude to write the chunking function from my notes. It ignored
-     the overlap, so I added that myself" is the level of detail we're after.
-     "I used AI to help me code" is not.
-
-     Milestone 5. -->
-
-**1.**
+**1.** 
+I asked ChatGPT to help write a paragraph-based chunking function. The first version split at blank lines, which made titles separate chunks. After inspecting the output, I asked for a revision that repeats the title with each body paragraph so each chunk has more context.
 
 **2.**
-
-<!-- ── Stretch features ─────────────────────────────────────────────────────
-     Doing one? Say so here BEFORE you start. A feature this README never
-     claims earns nothing.
-     ───────────────────────────────────────────────────────────────────────── -->
+I asked ChatGPT to help make my fourth criterion clearer. We discussed checking whether chunks could be understood independently, but I noticed that this did not check whether they included unrelated topics. I revised the criterion to require at least four of five inspected chunks to focus on one topic and include enough context to understand the main point without reading another chunk.
 
 ---
 

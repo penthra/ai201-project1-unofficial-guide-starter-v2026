@@ -30,8 +30,10 @@
 
 ## Chunking Strategy
 
-**Chunk size:**
-**Overlap:**
+Chunk size: Variable—one body paragraph per chunk, with the document title added to each chunk.
+Overlap: No overlap between body paragraphs. The title repeats in each chunk.
+
+my documents are short posts, paragraph boundaries preserve related sentences, and repeating the title helps identify the subject. The first version I produced is title-only chunks, so I revised it to attach titles to body paragraphs.
 
 <!-- What about YOUR documents made you pick these numbers? Short posts and
      long sectioned guides don't want the same chunking, and "800 seemed
@@ -44,15 +46,6 @@
      Milestone 3. -->
 
 ## Sample Chunks
-
-<!-- Five chunks, pasted as text. Label each one and name the file it came from
-     AND the function that produced it — the grader checks your code against
-     what you claim here.
-
-     `python app.py chunks -n 5` prints all three for you. Copy them straight
-     across.
-
-     Milestone 3. -->
 
 ======================================================================
 Chunk 1  |  source: admin_add_drop_deadline.txt#0  |  produced by: chunker.py::split_documents
@@ -93,11 +86,51 @@ The good: cheapest housing tier by about $900 a year, and the singles are real s
 
 <!-- One complete question and answer, pasted as text, with the source line
      visible. Milestone 4. -->
+python app.py ask "When can students purchase a parking permit?"
+python app.py ask "How long does it take to walk from Fenwick Court to central campus?"
+python app.py ask "How many midterm exams are scheduled for PHYS 130 Mechanics?"
+python app.py ask "What are Halden Hall's weekday serving hours?"
+python app.py ask "What account do students need to access campus Wi-Fi?"
 
-**Question:**
+python app.py ask "What is the capital of Mongolia?"
+python app.py ask "How do I change the oil in a diesel engine?"
+python app.py ask "Who won the 1994 World Cup?"
+python app.py ask "What is the recommended dosage of ibuprofen for a headache?"
+python app.py ask "How do I write a for loop in Rust?"
 
-**Answer:**
+python app.py retrieve "When can students purchase a parking permit?"
+python app.py retrieve "How long does it take to walk from Fenwick Court to central campus?"
+python app.py retrieve "How many midterm exams are scheduled for PHYS 130 Mechanics?"
+python app.py retrieve "What are Halden Hall's weekday serving hours?"
+python app.py retrieve "What account do students need to access campus Wi-Fi?"
 
+python app.py retrieve "What is the capital of Mongolia?"
+python app.py retrieve "How do I change the oil in a diesel engine?"
+python app.py retrieve "Who won the 1994 World Cup?"
+python app.py retrieve "What is the recommended dosage of ibuprofen for a headache?"
+python app.py retrieve "How do I write a for loop in Rust?"
+
+**Question:** "When can students purchase a parking permit?"
+**Answer:** Student permits for the west lots go on sale in August (admin_parking_permits.txt).
+Sources retrieved: admin_library_holds.txt, admin_parking_permits.txt, advising_registration.txt, study_library_hours.txt, transit_shuttle.txt
+
+**Question:** "How long does it take to walk from Fenwick Court to central campus?"
+**Answer:** It takes about 18 minutes on foot to walk from Fenwick Court to central campus.
+Source: `transit_walking.txt` (also mentioned in `housing_fenwick_court.txt`).
+Sources retrieved: housing_fenwick_court.txt, housing_fenwick_court_noise.txt, transit_shuttle.txt, transit_walking.txt
+
+**Question:** "How many midterm exams are scheduled for PHYS 130 Mechanics?"
+**Answer:** There are three midterm exams scheduled for PHYS 130 Mechanics.
+Source: `course_phys_130.txt` (and also found in `course_phys_130_exams.txt`).
+Sources retrieved: course_phys_130.txt, course_phys_130_exams.txt, course_phys_130_workload.txt
+
+**Question:** "What are Halden Hall's weekday serving hours?"
+**Answer:** Halden Hall's weekday hours are 7:30am to 7:00pm (dining_halden_hall.txt).
+Sources retrieved: dining_halden_hall.txt, dining_halden_hall_followup.txt, dining_the_atrium.txt
+
+**Question:** "What account do students need to access campus Wi-Fi?"
+**Answer:** Students need a student account to access campus Wi-Fi. This comes from `admin_wifi_and_accounts.txt`.
+Sources retrieved: admin_wifi_and_accounts.txt, money_jobs.txt, money_textbooks.txt, transit_shuttle.txt
 ```
 ```
 
@@ -112,9 +145,19 @@ The good: cheapest housing tier by about $900 a year, and the singles are real s
 
      Milestone 4. -->
 
-| Question | In corpus? | Best distance |
-|---|---|---|
-|  |  |  |
+| Question                                                            | In corpus? | Best distance |
+| ------------------------------------------------------------------- | ---------- | ------------- |
+| When can students purchase a parking permit?                        | Yes        | 0.4196        |
+| How long does it take to walk from Fenwick Court to central campus? | Yes        | 0.2129        |
+| How many midterm exams are scheduled for PHYS 130 Mechanics?        | Yes        | 0.2583        |
+| What are Halden Hall's weekday serving hours?                       | Yes        | 0.2064        |
+| What account do students need to access campus Wi-Fi?               | Yes        | 0.3511        |
+| What is the capital of Mongolia?                                    | No         | 0.7873        |
+| How do I change the oil in a diesel engine?                         | No         | 0.9228        |
+| Who won the 1994 World Cup?                                         | No         | 0.8474        |
+| What is the recommended dosage of ibuprofen for a headache?         | No         | 0.8487        |
+| How do I write a for loop in Rust?                                  | No         | 0.8598        |
+
 
 ## How I Used AI
 

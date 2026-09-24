@@ -201,32 +201,22 @@ Open until 2am during term, until 10pm during reading week, which is backwards a
 
 ## Diagnoses
 
-<!-- For each miss: which stage caused it, and how. The stage alone isn't
-     enough — you need the mechanism.
+Manual review found no confirmed misses in C1, C2, C4, or C5. The gate rejected all five out-of-corpus questions, but I still need to verify C3's exact refusal message.
 
-     Not a diagnosis: "Question 3 didn't work."
-     A diagnosis:     "Question 3 asks about laundry costs. The answer is in
-                       one sentence that got split across two chunks, so
-                       neither chunk on its own contains it."
+The scorer marked the PHYS 130 answer in run 2 as a failure because it expected “three midterms,” while the answer said “three midterm exams.” Both expressions match the retrieved information. The cause was exact phrase matching in scorer.py, not incorrect retrieval or generation.
 
-     The five stages: loading → chunking → embedding → retrieval → generation.
-
-     Look for a pattern. If three misses all ask about numbers, that's one
-     problem, not three.
-
-     Missed nothing? Say so, then say honestly whether your targets were set
-     low, and which one you'd tighten and to what.
-
-     Milestone 3. -->
+My questions are straightforward factual lookups, so the tests cover a limited range of behavior. I would tighten C1 from 4/5 to 5/5 in future because all five questions ask for facts explicitly stated in the corpus. I will keep the original targets unchanged for this Before/After comparison.
 
 ## The Improvement
 
 **What I changed:**
 
+[After implementing this change:] I updated normalize() in scorer.py to normalize “midterm exams” to “midterms” before checking the expected phrase.
+
 **Why I picked it:**
 
-<!-- Connect it to a specific diagnosis above in one sentence. If you can't,
-     you picked a fix because it sounded impressive. -->
+This directly addresses the observed false negative: the scorer should accept these equivalent expressions instead of rejecting a supported answer because its wording differs.
+
 
 ### Run Log — After
 

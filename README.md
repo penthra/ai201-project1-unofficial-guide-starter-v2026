@@ -133,7 +133,13 @@ I asked ChatGPT to help make my fourth criterion clearer. We discussed checking 
 | 3 | Gate rejects out-of-corpus questions and returns the required refusal | PENDING | The gate rejected all five questions. I still need to verify the exact refusal message, which is not shown in the log. |
 | 4 | Inspected chunks are focused and understandable independently | MET | I inspected the first retrieved chunk for each question. All five had clear subjects and understandable main points in every run. |
 | 5 | Answers are supported by the retrieved chunks | MET | All answers were supported. The scorer rejected “three midterm exams” in run 2 because it did not exactly match “three midterms,” but the meaning was unchanged. |
-
+| Question | Run 1 | Run 2 | Run 3 |
+|---|---|---|---|
+| When can students purchase a parking permit? | pass | pass | pass |
+| How long does it take to walk from Fenwick Court to central campus? | pass | pass | pass |
+| How many midterm exams are scheduled for PHYS 130 Mechanics? | pass | fail | pass |
+| What are Halden Hall's weekday serving hours? | pass | pass | pass |
+| What account do students need to access campus Wi-Fi? | pass | pass | pass |
 
 ### How many midterm exams are scheduled for PHYS 130 Mechanics? — run 2
 
@@ -203,11 +209,11 @@ People keep asking so: 7 hours a week, plus 3 on lab weeks. That's real time, no
 
 ## Diagnoses
 
-Manual review found no confirmed misses in C1, C2, C4, or C5. The gate rejected all five out-of-corpus questions, but I still need to verify C3's exact refusal message.
+Manual review found no confirmed criterion misses, but my targets were relatively low for this test set. All five questions asked for straightforward facts, and the out-of-corpus questions were clearly unrelated to campus life. These results show that the system handles my basic tests, not that it is excellent. C3’s rejection count passed, although I still need to verify its exact refusal message.
 
-The scorer marked the PHYS 130 answer in run 2 as a failure because it expected “three midterms,” while the answer said “three midterm exams.” Both expressions match the retrieved information. The cause was exact phrase matching in scorer.py, not incorrect retrieval or generation.
+The scorer marked the PHYS 130 answer in run 2 as a failure because “three midterm exams” did not exactly match “three midterms.” The meaning was correct and supported by the retrieved chunks, so this was a scorer limitation rather than a criterion miss.
 
-My questions are straightforward factual lookups, so the tests cover a limited range of behavior. I would tighten C1 from 4/5 to 5/5 in future because all five questions ask for facts explicitly stated in the corpus. I will keep the original targets unchanged for this Before/After comparison.
+For future evaluations, I would tighten C1 from at least 4/5 to 5/5 in every run because all five answers are explicitly stated in the corpus. I will keep the original targets unchanged for this Before/After comparison.
 
 ## The Improvement
 
@@ -229,6 +235,15 @@ This directly addresses the observed false negative: the scorer should accept th
 | 3 | Gate rejects out-of-corpus questions and returns the required refusal | PENDING | The gate rejected all five questions. I still need to verify the exact refusal message, which is not shown in the log. |
 | 4 | Inspected chunks are focused and understandable independently | MET | I inspected the first retrieved chunk for each question. All five had clear subjects and understandable main points in every run. |
 | 5 | Answers are supported by the retrieved chunks | MET | All answers were supported.|
+
+
+| Question | Run 1 | Run 2 | Run 3 |
+|---|---|---|---|
+| When can students purchase a parking permit? | pass | pass | pass |
+| How long does it take to walk from Fenwick Court to central campus? | pass | pass | pass |
+| How many midterm exams are scheduled for PHYS 130 Mechanics? | pass | pass | pass |
+| What are Halden Hall's weekday serving hours? | pass | pass | pass |
+| What account do students need to access campus Wi-Fi? | pass | pass | pass |
 
 ### How many midterm exams are scheduled for PHYS 130 Mechanics? — run 2
 

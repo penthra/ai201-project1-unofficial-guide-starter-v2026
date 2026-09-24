@@ -128,11 +128,76 @@ I asked ChatGPT to help make my fourth criterion clearer. We discussed checking 
 
 | # | Criterion | Verdict | How I decided |
 |---|---|---|---|
-| 1 |  |  |  |
-| 2 |  |  |  |
-| 3 |  |  |  |
-| 4 |  |  |  |
-| 5 |  |  |  |
+| 1 | Retrieved chunks contain the answer | MET | All five questions retrieved an answer-containing chunk in each of the three runs, exceeding the 4/5 target. |
+| 2 | Every answer names a source | MET | All five answers named at least one source in every run. |
+| 3 | Gate rejects out-of-corpus questions and returns the required refusal | PENDING | The gate rejected all five questions. I still need to verify the exact refusal message, which is not shown in the log. |
+| 4 | Inspected chunks are focused and understandable independently | MET | I inspected the first retrieved chunk for each question. All five had clear subjects and understandable main points in every run. |
+| 5 | Answers are supported by the retrieved chunks | MET | All answers were supported. The scorer rejected “three midterm exams” in run 2 because it did not exactly match “three midterms,” but the meaning was unchanged. |
+
+
+### When can students purchase a parking permit? — run 1
+
+- Best distance: 0.4196 (passed the gate)
+- Sources retrieved: admin_library_holds.txt, admin_parking_permits.txt, advising_registration.txt, study_library_hours.txt, transit_shuttle.txt
+
+#### Generated answer
+
+````text
+Student permits for the west lots go on sale in August (admin_parking_permits.txt).
+````
+
+#### Retrieved chunks
+
+- Chunk: admin_parking_permits.txt#0
+- Distance: 0.4196
+- Produced by: chunker.py::split_documents
+
+````text
+On the parking permits
+
+Student permits for the west lots go on sale in August and sell out in about three days. The east lot never sells out because it's a 12-minute walk. There is no waitlist — people who miss the window park on Verrill Street and walk in, which is legal but unmarked and confuses everyone.
+````
+
+- Chunk: transit_shuttle.txt#1
+- Distance: 0.6248
+- Produced by: chunker.py::split_documents
+
+````text
+The campus shuttle
+
+It's free with a student ID. The stop outside Fenwick Court is the one that gets skipped when the driver is behind, which is worth knowing if you live there.
+````
+
+- Chunk: advising_registration.txt#1
+- Distance: 0.6675
+- Produced by: chunker.py::split_documents
+
+````text
+Registration and your adviser
+
+Registration times are staggered by credit hours, same as the housing lottery. Popular courses fill in the first two days.
+````
+
+- Chunk: admin_library_holds.txt#0
+- Distance: 0.7013
+- Produced by: chunker.py::split_documents
+
+````text
+On the library holds
+
+You can place a hold on a checked-out book and it usually arrives in two to three days. What isn't advertised: the interlibrary system covers eleven other institutions and requests through it take about a week but almost never fail.
+````
+
+- Chunk: study_library_hours.txt#0
+- Distance: 0.7134
+- Produced by: chunker.py::split_documents
+
+````text
+Library hours and where to actually sit
+
+Open until 2am during term, until 10pm during reading week, which is backwards and catches everyone out every single year.
+````
+
 
 ## Diagnoses
 

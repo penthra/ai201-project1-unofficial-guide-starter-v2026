@@ -135,67 +135,69 @@ I asked ChatGPT to help make my fourth criterion clearer. We discussed checking 
 | 5 | Answers are supported by the retrieved chunks | MET | All answers were supported. The scorer rejected “three midterm exams” in run 2 because it did not exactly match “three midterms,” but the meaning was unchanged. |
 
 
-### When can students purchase a parking permit? — run 1
+### How many midterm exams are scheduled for PHYS 130 Mechanics? — run 2
 
-- Best distance: 0.4196 (passed the gate)
-- Sources retrieved: admin_library_holds.txt, admin_parking_permits.txt, advising_registration.txt, study_library_hours.txt, transit_shuttle.txt
+- Best distance: 0.2583 (passed the gate)
+- Sources retrieved: course_phys_130.txt, course_phys_130_exams.txt, course_phys_130_workload.txt
 
 #### Generated answer
 
 ````text
-Student permits for the west lots go on sale in August (admin_parking_permits.txt).
+There are three midterm exams scheduled for PHYS 130 Mechanics. 
+
+This information came from `course_phys_130.txt` and `course_phys_130_exams.txt`.
 ````
 
 #### Retrieved chunks
 
-- Chunk: admin_parking_permits.txt#0
-- Distance: 0.4196
+- Chunk: course_phys_130.txt#0
+- Distance: 0.2583
 - Produced by: chunker.py::split_documents
 
 ````text
-On the parking permits
+PHYS 130 Mechanics
 
-Student permits for the west lots go on sale in August and sell out in about three days. The east lot never sells out because it's a 12-minute walk. There is no waitlist — people who miss the window park on Verrill Street and walk in, which is legal but unmarked and confuses everyone.
+Just finished a year in this building. Format is lecture with a compulsory lab that meets fortnightly. Assessment: three midterms, no final, plus a lab practical. Not curved, but the lowest midterm is dropped.
 ````
 
-- Chunk: transit_shuttle.txt#1
-- Distance: 0.6248
+- Chunk: course_phys_130.txt#1
+- Distance: 0.3589
 - Produced by: chunker.py::split_documents
 
 ````text
-The campus shuttle
+PHYS 130 Mechanics
 
-It's free with a student ID. The stop outside Fenwick Court is the one that gets skipped when the driver is behind, which is worth knowing if you live there.
+Expect 7 hours a week, plus 3 on lab weeks.
 ````
 
-- Chunk: advising_registration.txt#1
-- Distance: 0.6675
+- Chunk: course_phys_130_exams.txt#0
+- Distance: 0.3762
 - Produced by: chunker.py::split_documents
 
 ````text
-Registration and your adviser
+PHYS 130 Mechanics — assessment
 
-Registration times are staggered by credit hours, same as the housing lottery. Popular courses fill in the first two days.
+Three midterms, no final, plus a lab practical. Not curved, but the lowest midterm is dropped.
 ````
 
-- Chunk: admin_library_holds.txt#0
-- Distance: 0.7013
+- Chunk: course_phys_130_exams.txt#1
+- Distance: 0.4109
 - Produced by: chunker.py::split_documents
 
 ````text
-On the library holds
+PHYS 130 Mechanics — assessment
 
-You can place a hold on a checked-out book and it usually arrives in two to three days. What isn't advertised: the interlibrary system covers eleven other institutions and requests through it take about a week but almost never fail.
+The lab practical is worth 20% and almost nobody prepares for it.
 ````
 
-- Chunk: study_library_hours.txt#0
-- Distance: 0.7134
+- Chunk: course_phys_130_workload.txt#0
+- Distance: 0.4147
 - Produced by: chunker.py::split_documents
 
 ````text
-Library hours and where to actually sit
+Workload for PHYS 130 Mechanics
 
-Open until 2am during term, until 10pm during reading week, which is backwards and catches everyone out every single year.
+People keep asking so: 7 hours a week, plus 3 on lab weeks. That's real time, not optimistic time.
 ````
 
 
@@ -220,39 +222,89 @@ This directly addresses the observed false negative: the scorer should accept th
 
 ### Run Log — After
 
-<!-- Same format, same five criteria, three runs each.
-     `python run_eval.py --label after` -->
+| # | Criterion | Verdict | How I decided |
+|---|---|---|---|
+| 1 | Retrieved chunks contain the answer | MET | All five questions retrieved an answer-containing chunk in each of the three runs, exceeding the 4/5 target. |
+| 2 | Every answer names a source | MET | All five answers named at least one source in every run. |
+| 3 | Gate rejects out-of-corpus questions and returns the required refusal | PENDING | The gate rejected all five questions. I still need to verify the exact refusal message, which is not shown in the log. |
+| 4 | Inspected chunks are focused and understandable independently | MET | I inspected the first retrieved chunk for each question. All five had clear subjects and understandable main points in every run. |
+| 5 | Answers are supported by the retrieved chunks | MET | All answers were supported.|
 
-| Criterion | Target | Run 1 | Run 2 | Run 3 | Verdict |
-|---|---|---|---|---|---|
-| 1. Retrieved chunk contains the answer | 4 of 5 |  |  |  |  |
-| 2. Every answer names a source | 5 of 5 |  |  |  |  |
-| 3. Gate stops out-of-corpus questions | 4 of 5 |  |  |  |  |
-| 4. | | | | | |
-| 5. | | | | | |
+### How many midterm exams are scheduled for PHYS 130 Mechanics? — run 2
+
+- Best distance: 0.2583 (passed the gate)
+- Sources retrieved: course_phys_130.txt, course_phys_130_exams.txt, course_phys_130_workload.txt
+
+#### Generated answer
+
+````text
+There are three midterms scheduled for PHYS 130 Mechanics. This information comes from `course_phys_130.txt` and `course_phys_130_exams.txt`.
+````
+
+#### Retrieved chunks
+
+- Chunk: course_phys_130.txt#0
+- Distance: 0.2583
+- Produced by: chunker.py::split_documents
+
+````text
+PHYS 130 Mechanics
+
+Just finished a year in this building. Format is lecture with a compulsory lab that meets fortnightly. Assessment: three midterms, no final, plus a lab practical. Not curved, but the lowest midterm is dropped.
+````
+
+- Chunk: course_phys_130.txt#1
+- Distance: 0.3589
+- Produced by: chunker.py::split_documents
+
+````text
+PHYS 130 Mechanics
+
+Expect 7 hours a week, plus 3 on lab weeks.
+````
+
+- Chunk: course_phys_130_exams.txt#0
+- Distance: 0.3762
+- Produced by: chunker.py::split_documents
+
+````text
+PHYS 130 Mechanics — assessment
+
+Three midterms, no final, plus a lab practical. Not curved, but the lowest midterm is dropped.
+````
+
+- Chunk: course_phys_130_exams.txt#1
+- Distance: 0.4109
+- Produced by: chunker.py::split_documents
+
+````text
+PHYS 130 Mechanics — assessment
+
+The lab practical is worth 20% and almost nobody prepares for it.
+````
+
+- Chunk: course_phys_130_workload.txt#0
+- Distance: 0.4147
+- Produced by: chunker.py::split_documents
+
+````text
+Workload for PHYS 130 Mechanics
+
+People keep asking so: 7 hours a week, plus 3 on lab weeks. That's real time, not optimistic time.
+````
 
 **Did it help?**
 
-<!-- Say plainly whether it did, and how you know. If it made things worse,
-     say that — a change that backfired, honestly reported, earns full credit
-     and is more interesting than one that worked. What matters is that you can
-     tell.
-
-     Milestone 4. -->
+The revised scorer checks for individual expected words instead of one exact phrase and applies simple plural normalization. This allows “three midterm exams” to match “three midterms” when the answer also names a retrieved source. I still need to inspect the After results to confirm its behavior across all three runs. This change improves the matching rule; it does not change retrieval or answer generation.
 
 ## What's Still Broken
 
-<!-- For each criterion still missed after your fix: what you'd do about it,
-     and why you stopped where you did.
+The scorer checks word presence, not meaning. It could accept “There are not three midterms” because the expected words are present. Its plural normalization is also approximate, and it does not recognize every valid paraphrase.
 
-     "I ran out of time" is fine if it's true. Pretending nothing is left is
-     not.
-
-     Milestone 5. -->
+I therefore still need to compare answers with their retrieved chunks when evaluating C5. I cannot yet identify which criteria remain missed after the change because the After results have not been reviewed.
 
 ## What I'd Do Differently
 
-<!-- Knowing what you know now — which of your five criteria would you write
-     differently, and why?
+I would make C4's sampling rule explicit: inspect the first retrieved chunk for each of my five questions. That would make the evaluation more consistent.
 
-     Milestone 5. -->
+For future evaluations, I would tighten C1 from 4 of 5 to 5 of 5 because my questions ask for straightforward facts explicitly present in the corpus. I would keep C5 focused on factual support rather than exact wording. The Before and After comparison still uses my original criteria and targets.

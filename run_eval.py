@@ -123,6 +123,7 @@ def main():
                     "question": question,
                     "run": run,
                     "answer": answer,
+		    "chunks": results,
                     "sources": sorted({r.source for r in results}),
                     "best_distance": decision.best_distance,
                     "gate_passed": decision.passed,
@@ -255,11 +256,27 @@ def write_report(rows, transcript, gate_rows, args, corpus, top_k, threshold, sc
             f"({'passed' if entry['gate_passed'] else 'refused by'} the gate)",
             f"- Sources retrieved: {', '.join(entry['sources']) or 'none'}",
             "",
-            "```",
+            "#### Generated answer",
+            "",
+            "````text",
             entry["answer"],
-            "```",
+            "````",
+            "",
+            "#### Retrieved chunks",
             "",
         ]
+
+        for chunk in entry["chunks"]:
+            lines += [
+                f"- Chunk: {chunk.label}",
+                f"- Distance: {chunk.distance:.4f}",
+                f"- Produced by: {chunk.produced_by}",
+                "",
+                "````text",
+                chunk.text,
+                "````",
+                "",
+            ]
 
     path.write_text("\n".join(lines), encoding="utf-8")
 

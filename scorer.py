@@ -1,25 +1,29 @@
 import re
 
 
-def normalize(text: str) -> str:
-    """Ignore capitalization and differences in whitespace."""
-    return " ".join(text.casefold().split())
+def words(text: str) -> set[str]:
+    tokens = re.findall(r"\b\w+\b", text.casefold())
+
+    return {
+        word[:-1]
+        if len(word) > 3 and word.endswith("s")
+        and not word.endswith("ss")
+        else word
+        for word in tokens
+    }
 
 
 def judge(question, expects, answer, results) -> bool:
-    expected = normalize(expects)
-    response = normalize(answer)
+    expected_words = words(expects)
+    answer_words = words(answer)
 
-    if not expected or not response:
+    if not expected_words or not answer_words:
         return False
 
-    # Check that the expected phrase appears as complete words.
-    pattern = rf"(?<!\w){re.escape(expected)}(?!\w)"
-    has_expected = re.search(pattern, response) is not None
+    has_expected = expected_words.issubset(answer_words)
 
-    # Check that the answer names at least one retrieved source.
     has_source = any(
-        normalize(result.source) in response
+        result.source.casefold() in answer.casefold()
         for result in results
         if result.source
     )

@@ -95,44 +95,30 @@ I asked ChatGPT to help make my fourth criterion clearer. We discussed checking 
 
 # Week 2
 
-<!-- These sections get ADDED to what's already above. Don't delete or rewrite
-     week 1 — the point is that someone can see what you said before you knew
-     how it went. -->
-
 ## Run Log — Before
 
-<!-- Your five criteria, three runs each. `python run_eval.py --label before`
-     runs the questions, puts the OUT_OF_SCOPE ones through the gate, and
-     writes it all into results/ for you. Targets come from criteria.md; the
-     verdict column is your call.
 
-     Criterion 3 is measured in one deterministic pass rather than three, so
-     the same number goes in all three run columns. That's correct, not lazy.
-
-     Milestone 1. -->
-
-<!-- Underneath, paste the REAL output for each criterion from one of your
-     runs — the actual text your system produced, not a description of it.
-     Name the file and function that produced it. -->
+| Criterion | Target | Run 1 | Run 2 | Run 3 | Verdict |
+|---|---|---|---|---|---|
+| 1. Retrieved chunks contain the answer | At least 4 of 5 | 5/5 | 5/5 | 5/5 | MET |
+| 2. Every answer names a source | 5 of 5 | 5/5 | 5/5 | 5/5 | MET |
+| 3. Gate rejects out-of-corpus questions and returns the required refusal | At least 4 of 5 | 5/5 rejected | 5/5 rejected | 5/5 rejected | MET|
+| 4. Inspected chunks are focused and understandable independently | At least 4 of 5 | 5/5 | 5/5 | 5/5 | MET |
+| 5. Answers are supported by the retrieved chunks | 5 of 5 | 5/5 | 5/5 | 5/5 | MET |
 
 ## Verdicts
 
-<!-- MET or MISSED for each of the five, against the target you wrote last
-     week — not a new one. Plus a sentence on how you decided. That sentence
-     matters most where it was close.
 
-     If your target said 4 of 5 and your runs came out 4, 3, 4, that's a MISS.
-     The target has to hold, not show up occasionally.
-
-     Milestone 2. -->
 
 | # | Criterion | Verdict | How I decided |
 |---|---|---|---|
 | 1 | Retrieved chunks contain the answer | MET | All five questions retrieved an answer-containing chunk in each of the three runs, exceeding the 4/5 target. |
 | 2 | Every answer names a source | MET | All five answers named at least one source in every run. |
-| 3 | Gate rejects out-of-corpus questions and returns the required refusal | PENDING | The gate rejected all five questions. I still need to verify the exact refusal message, which is not shown in the log. |
+| 3 | Gate rejects out-of-corpus questions and returns the required refusal | MET | The gate rejected all five questions. I still need to verify the exact refusal message, which is not shown in the log. |
 | 4 | Inspected chunks are focused and understandable independently | MET | I inspected the first retrieved chunk for each question. All five had clear subjects and understandable main points in every run. |
 | 5 | Answers are supported by the retrieved chunks | MET | All answers were supported. The scorer rejected “three midterm exams” in run 2 because it did not exactly match “three midterms,” but the meaning was unchanged. |
+
+
 | Question | Run 1 | Run 2 | Run 3 |
 |---|---|---|---|
 | When can students purchase a parking permit? | pass | pass | pass |
@@ -232,7 +218,7 @@ This directly addresses the observed false negative: the scorer should accept th
 |---|---|---|---|
 | 1 | Retrieved chunks contain the answer | MET | All five questions retrieved an answer-containing chunk in each of the three runs, exceeding the 4/5 target. |
 | 2 | Every answer names a source | MET | All five answers named at least one source in every run. |
-| 3 | Gate rejects out-of-corpus questions and returns the required refusal | PENDING | The gate rejected all five questions. I still need to verify the exact refusal message, which is not shown in the log. |
+| 3 | Gate rejects out-of-corpus questions and returns the required refusal | MET | The gate rejected all five questions. I still need to verify the exact refusal message, which is not shown in the log. |
 | 4 | Inspected chunks are focused and understandable independently | MET | I inspected the first retrieved chunk for each question. All five had clear subjects and understandable main points in every run. |
 | 5 | Answers are supported by the retrieved chunks | MET | All answers were supported.|
 

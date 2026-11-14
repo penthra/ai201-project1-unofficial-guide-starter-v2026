@@ -255,3 +255,114 @@ weeks.
 
 `results/` is deliberately **not** in `.gitignore`. Your run logs are evidence
 that the test actually happened, and they're part of what gets graded.
+
+
+## Capstone hosted runtime preparation
+
+The existing HTTP entry point is `serve:app` in `serve.py`. It calls
+`app.ask_pipeline`, preserving the CLI and the original RAG behavior.
+
+Use Python **3.13.7** (`.python-version`, matching the existing local venv).
+The hosted environment must be Linux for Gunicorn; the Windows `.venv` is
+not a deployable runtime. From the repository root, install with:
+
+```bash
+python -m pip install -r requirements-runtime.txt
+python -m pip check
+```
+
+`requirements-runtime.txt` pins all seven direct dependencies to versions
+read from the existing venv, constrained by the original course ranges in
+`requirements.txt`. It does not lock transitive packages. A fresh Linux
+install and complete transitive dependency lock remain unverified; the pins
+are a reproducible direct dependency baseline, not a fully locked environment.
+
+In the host's environment/secret settings, set `GEMINI_API_KEY` to a real key.
+Do not commit a key or upload a local `.env`/`.venv`. `start.sh` requires the key
+in the exported environment; it does not read shell assignments from `.env`.
+Optional variables: `AI201_CORPUS` (default `campus_life`), `AI201_MODEL`
+(default `gemini-3.5-flash-lite` in `config.py`), `AI201_CACHE` (set `0` for
+measured runs), and `PORT` (provided by the host; defaults to `5000`). Keep
+`AI201_DEBUG` unset. Do not enable the staff-only `AI201_FAKE_EMBEDDINGS` switch.
+Model availability and API quota must be confirmed against the course account.
+
+Exact hosted start command:
+
+```bash
+sh start.sh
+```
+
+The script changes to the repo directory, requires the secret, rebuilds the
+selected corpus index, and only after success executes:
+
+```bash
+python -m gunicorn --workers 1 --bind "0.0.0.0:${PORT:-5000}" --timeout 120 serve:app
+```
+
+The 120-second worker timeout allows room for query model initialization and
+the existing API pacing/retries; requests that exceed it can still time out.
+Gunicorn serves the existing `/ask` and `/health` routes. `/health` must report
+`index_ready: true`; HTTP 200 alone is insufficient.
+
+Startup needs the corpus documents, outbound access to Chroma's embedding
+model CDN, and writable storage for the ONNX model cache under the runtime
+user's home directory and `chroma_db/` under the repo. With response caching
+enabled, `.cache/` under the repo must also be writable. No model weights,
+index, or response cache are added to Git. The first indexing call downloads
+approximately 80 MB of `all-MiniLM-L6-v2` ONNX assets according to `store.py`.
+Generation stays on the Gemini API; no local generation model or optional
+`sentence-transformers`/PyTorch install is needed.
+
+Peak RAM during indexing and queries must still be measured against 512 MB.
+One worker reduces duplicate model memory but does not establish that it fits.
+Full startup, CDN/API access, Linux dependency compatibility, host startup
+limits, and request handling remain unverified. Separate capstone criteria
+must be committed before any project run. No hosted service has been created.
+
+
+## Render Free deployment configuration
+
+Selected host: Render Free Web Service, retaining hosted Path A.
+`render.yaml` defines the Python service, Free plan, build/start commands,
+`/health` check, `campus_life` corpus, and disabled response caching for measured
+runs. Python 3.13.7 comes from the existing root `.python-version` file.
+`GEMINI_API_KEY` uses `sync: false`: supply its value privately in Render;
+no credential value belongs in this repository. Leave `PORT` to Render;
+`start.sh` binds to it. Automatic Git-triggered deploys are disabled.
+
+Equivalent dashboard settings:
+
+| Setting | Value |
+| --- | --- |
+| Service type | Web Service |
+| Runtime | Python |
+| Instance plan | Free |
+| Root directory | Repository root |
+| Build command | `python -m pip install -r requirements-runtime.txt && python -m pip check` |
+| Start command | `sh start.sh` |
+| Health check path | `/health` |
+| Auto-deploy | Off |
+| Secret | `GEMINI_API_KEY` supplied in Render |
+| Environment | `AI201_CORPUS=campus_life`, `AI201_CACHE=0` |
+
+Render Free provides 512 MB RAM and 0.1 CPU. Compatibility remains provisional:
+measure peak RAM during indexing, embedding initialization, and real questions
+before declaring it fits. The approximately 80 MB model download is not a RAM
+measurement. The installed Chroma embedder runs inference in batches of 32,
+within the repo's 256-chunk indexing batches. Keep the existing single worker.
+Free services lose runtime files on restart/redeploy/spin-down, so the start
+script rebuilds the index. Downloads and indexing may increase cold-start time.
+No persistent disk or additional paid service is configured.
+
+Configuration preparation does not deploy anything. Creating/applying a Render
+Blueprint can perform an initial deployment even with auto-deploy disabled;
+do not do that until the separate capstone criteria are committed and the
+memory/startup checks are complete. `/health` returns HTTP 200 even when
+`index_ready` is false, so also inspect that JSON field. Live RAG behavior,
+Linux installation, API/model access, memory fit, and Render-side validation
+remain unverified. Structured request logging remains separate capstone work.
+
+References: [Blueprint specification](https://render.com/docs/blueprint-spec),
+[compute limits](https://render.com/docs/compute-plans),
+[Free service lifecycle](https://render.com/docs/free), and
+[Python version selection](https://render.com/docs/python-version).

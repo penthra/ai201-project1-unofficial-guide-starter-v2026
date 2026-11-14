@@ -1,0 +1,14 @@
+#!/bin/sh
+# Hosted Linux entry point. Invoke with: sh start.sh
+set -eu
+cd "$(dirname "$0")"
+
+# Require the host secret before downloading models or building the index.
+: "${GEMINI_API_KEY:?Set GEMINI_API_KEY in the host secret environment}"
+export AI201_CORPUS="${AI201_CORPUS:-campus_life}"
+export PYTHONUNBUFFERED=1
+
+# Rebuild on every start so an empty/ephemeral disk is supported.
+# Failure stops startup rather than serving an API without an index.
+python app.py index --corpus "$AI201_CORPUS"
+exec python -m gunicorn --workers 1 --bind "0.0.0.0:${PORT:-5000}" --timeout 120 serve:app

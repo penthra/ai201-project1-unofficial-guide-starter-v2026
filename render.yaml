@@ -1,0 +1,17 @@
+# Configuration only: creating a Blueprint in Render will deploy the service.
+services:
+  - type: web
+    name: campus-life-rag
+    runtime: python
+    plan: free
+    autoDeployTrigger: 'off'
+    buildCommand: python -m pip install -r requirements-runtime.txt && python -m pip check
+    startCommand: sh start.sh
+    healthCheckPath: /health
+    envVars:
+      - key: GEMINI_API_KEY
+        sync: false
+      - key: AI201_CORPUS
+        value: campus_life
+      - key: AI201_CACHE
+        value: '0'

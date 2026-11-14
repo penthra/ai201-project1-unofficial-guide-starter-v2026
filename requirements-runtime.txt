@@ -1,0 +1,11 @@
+# Hosted runtime: exact direct versions read from the existing .venv metadata.
+# Retain the course compatibility bounds as constraints.
+# Transitive dependencies are resolved by pip; this is not a full lockfile.
+-c requirements.txt
+python-dotenv==1.1.1
+chromadb==0.6.3
+posthog==3.25.0
+google-genai==1.75.0
+rank-bm25==0.2.2
+flask==3.1.3
+gunicorn==23.0.0

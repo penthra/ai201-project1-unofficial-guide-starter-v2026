@@ -73,10 +73,10 @@ def ask():
     """
     from app import ask_pipeline
 
-    payload = request.get_json(silent=True) or {}
-    question = (payload.get("question") or "").strip()
+    payload = request.get_json(silent=True)
+    question = payload.get("question") if isinstance(payload, dict) else None
 
-    if not question:
+    if not isinstance(question, str) or not question.strip():
         return (
             jsonify(
                 {
@@ -86,6 +86,8 @@ def ask():
             ),
             400,
         )
+
+    question = question.strip()
 
     try:
         outcome = ask_pipeline(question, corpus=config.CORPUS)

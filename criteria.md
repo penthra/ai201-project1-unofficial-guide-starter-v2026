@@ -137,3 +137,26 @@ All five answers should be supported by the retrieved chunks because even one in
      The whole reason the originals stay visible is so someone can see what you
      said before you knew the answer.
      ───────────────────────────────────────────────────────────────────────── -->
+
+
+# Capstone acceptance criteria
+
+**C1:** At least 4 of my 5 Project 1 questions receive a response supported by the retrieved chunks within 5 seconds on a warm hosted request.
+
+**Reason:** Users need accurate answers without a long wait. Allowing one miss sets a practical initial target for the free-tier demo.
+
+**C2 — Structured logs:** Each of my five Project 1 requests produces exactly one valid JSON log containing its timestamp, request ID, question, answer, model, sources, best distance, refusal flag, HTTP status, duration, and error type when applicable.
+
+**Reason:** Complete records let me investigate individual runs and explain their outcomes.
+
+**C3 — Hosted restart:** After one Render service restart, `/health` reports `index_ready: true`, and the hosted API answers my parking-permit question correctly with a source.
+
+**Reason:** The deployed build should restore a usable RAG without manual indexing.
+
+**C4 — Invalid input:** A request with a non-string question returns HTTP 400 and produces a structured error log. A subsequent valid question still succeeds.
+
+**Reason:** Invalid input should be observable and should not stop the service from answering valid questions.
+
+**C5 — Unsupported questions:** At least 4 of my 5 existing out-of-scope questions receive the required refusal, with `refused: true` in both the response and log.
+
+**Reason:** Hosting and instrumentation should preserve the original protection against unsupported answers.

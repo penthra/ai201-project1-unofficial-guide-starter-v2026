@@ -20,20 +20,67 @@ Why this exists: `app.py` runs once and exits, which is fine on your laptop
 and impossible to deploy. A hosted service has to stay up and wait for
 requests. This is the smallest thing that does that.
 
-⚠️ There is deliberately no logging, no timing and no metrics in this file.
-Week 9 has you build the structured log yourself — the request line, the
-timing field everyone skips, the whole instrument-before-you-deploy exercise.
-Shipping a logger here would hand you the answer to that. Add yours in week 9;
-this file stays the bare shell until then.
+Each POST /ask emits one structured JSON completion record to stdout,
+including validation failures, gate refusals, and handled pipeline errors.
+X-Request-ID connects the response to its record in Render's Logs tab.
 """
 
+import json
 import os
+import time
+from datetime import datetime, timezone
+from uuid import uuid4
 
-from flask import Flask, jsonify, request
+from flask import Flask, g, jsonify, request
 
 import config
 
 app = Flask(__name__)
+
+
+@app.before_request
+def start_ask_log():
+    if request.path == "/ask" and request.method == "POST":
+        g.ask_started = time.perf_counter()
+        g.ask_timestamp = datetime.now(timezone.utc).isoformat()
+        g.ask_request_id = str(uuid4())
+
+
+@app.after_request
+def finish_ask_log(response):
+    if not hasattr(g, "ask_request_id"):
+        return response
+
+    payload = request.get_json(silent=True)
+    question = payload.get("question") if isinstance(payload, dict) else None
+    question = question.strip() if isinstance(question, str) else None
+    outcome = response.get_json(silent=True)
+    outcome = outcome if isinstance(outcome, dict) else {}
+    error_type = getattr(g, "ask_error_type", None)
+    if error_type is None and response.status_code >= 400:
+        error_type = "ValidationError" if response.status_code == 400 else "HTTPError"
+
+    record = {
+        "event": "rag_request",
+        "timestamp": g.ask_timestamp,
+        "request_id": g.ask_request_id,
+        "question": question,
+        "answer": outcome.get("answer"),
+        "corpus": config.CORPUS,
+        "model": config.MODEL,
+        "cache_enabled": config.CACHE_ENABLED,
+        "sources": outcome.get("sources", []),
+        "best_distance": outcome.get("best_distance"),
+        "threshold": outcome.get("threshold", config.THRESHOLD),
+        "refused": outcome.get("refused"),
+        "http_status": response.status_code,
+        "duration_ms": round((time.perf_counter() - g.ask_started) * 1000, 3),
+        "error_type": error_type,
+    }
+    # Exclude environment values, prompts, and exception messages.
+    print(json.dumps(record, ensure_ascii=True), flush=True)
+    response.headers["X-Request-ID"] = g.ask_request_id
+    return response
 
 
 @app.get("/health")
@@ -92,6 +139,7 @@ def ask():
     try:
         outcome = ask_pipeline(question, corpus=config.CORPUS)
     except Exception as exc:  # noqa: BLE001 — a reader gets this, not a traceback
+        g.ask_error_type = type(exc).__name__
         return jsonify({"error": f"{type(exc).__name__}: {exc}"}), 500
 
     return jsonify(

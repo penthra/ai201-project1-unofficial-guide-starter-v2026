@@ -331,9 +331,19 @@ See [RUNNING.md](RUNNING.md#capstone-running-it) for the live Render URL, setup,
 - The service is ready when `/health` returns `index_ready: true`, not just HTTP 200.
 - Usage: `POST https://<host>/ask` with `{"question": "..."}` returns the answer, sources, refusal flag, best distance, and threshold.
 
-**Logging**
+**Instrumentation**
 
-Each `/ask` request writes one JSON line to stdout (captured by the host's logs) with: timestamp, request ID, question, answer, model, sources, best distance, refusal flag, HTTP status, duration (ms), and error type if any. Failed and invalid requests are logged too. No secrets in logs. For measured runs, set `AI201_CACHE=0` so repeated questions reach the model. Exported log records serve as capstone evidence.
+`serve.py` now emits one JSON completion record to stdout for each `POST /ask`, including answers, refusals, validation failures, and handled exceptions. Records contain UTC timestamp, request ID, question, answer, corpus, configured model, cache setting, sources, best distance, threshold, refusal flag, HTTP status, server duration in milliseconds, and error type when applicable. The response's `X-Request-ID` matches the record. Exception messages and environment values are excluded from these records.
+
+Read the existing service's **Logs** page in Render and search for `rag_request`. Copy the JSON message text promptly into a local JSONL evidence file, then paste the ten measured records and at least one failed/rejected record here. Render's `Rndr-Id` is a separate platform ID; use this application's `X-Request-ID` for matching. See [Render's log guide](https://render.com/docs/logging).
+
+Live structured evidence is **pending redeployment of the logging change**. Local tests use a stubbed pipeline and are not live records. The public URL does not expose Render's private stdout logs; their JSON text must be copied from the dashboard. No synthetic records are substituted for the required evidence.
+
+**What It Costs**
+
+The ten-run average is **not measured yet**; it will be recorded after logging is verified on the live deployment. The selected cost measure is **client-observed elapsed seconds per request**, not dollars or tokens. After one successful warm-up request excluded from the average, send ten sequential questions to the existing hosted `/ask` endpoint, cycling through the five Project 1 questions twice without a deliberate idle interval. Measure each request from dispatch to receipt of the full response body with a monotonic clock; this includes DNS/TLS/network time, retrieval, any API waits/retries, generation, and response transfer. Report all ten outcomes and compute `sum(elapsed_seconds) / 10`; do not silently remove slow or failed measured attempts. This is an operational warm condition, not proof the provider kept every underlying connection warm.
+
+Save each timestamp, request/response, HTTP status, matching request ID, and elapsed time immediately, before asking for the Render log export. Keep the warm-up and extra rejected request outside the ten-run average. Confirm the live records show `cache_enabled: false`; otherwise describe caching honestly rather than claiming ten new model calls. API spend and token counts are not exposed per request by the current endpoint, so neither will be estimated. These measurements do not score acceptance criteria or run the Milestone 5 formal trials.
 
 **Memory Check (512 MB limit)**
 

@@ -225,3 +225,40 @@ Use the build script when preparing assets for `sh start.sh`. `python serve.py`
 is a local Flask development server, while `sh start.sh` is the tested Gunicorn
 start path. Do not run `run_eval.py` as part of this smoke check; formal trials
 remain separate.
+
+
+## Structured logging: redeploy before cost evidence
+
+The five capstone criteria are now committed in `6f8923e` (`criterion`). The
+older verification record above describes the earlier repository state.
+
+`serve.py` now uses Flask before/after-request hooks to emit one JSON line to
+stdout per `POST /ask`, covering normal responses, gate refusals, HTTP 400
+validation rejections, and handled pipeline errors. A generated `X-Request-ID`
+response header matches `request_id` in the log. `duration_ms` uses a monotonic
+clock and covers server request handling; it excludes client/network time and
+is not a token or billing measurement. The `model` field is the configured
+model name. `cache_enabled` records the actual server cache configuration.
+No environment values, system prompts, or exception messages are logged.
+
+Push the changed `serve.py` and the accompanying README/RUNNING documentation,
+then manually deploy the latest commit on the **existing** Render service.
+Keep Build Command `sh build.sh`, Start Command `sh start.sh`, and
+`AI201_CACHE=0`. No new service or plan change is needed. Neither Git actions
+nor deployment is performed by this preparation step.
+
+After deployment, check both a normal `/ask` response and an invalid request
+such as `{"question":123}`. Each should have `X-Request-ID`; Render > existing
+service > Logs should show exactly one `rag_request` JSON line with the matching
+ID and HTTP status. Copy the JSON **message** text, not screenshots or secrets.
+The platform's `Rndr-Id` header is different from the application's request ID.
+Runtime stdout logs are private to your Render account and cannot be fetched
+from the public `/ask` endpoint. See https://render.com/docs/logging.
+
+Once live logging is confirmed, collect the ten-run warm elapsed-time sample
+and the extra failed/rejected record described under **What It Costs** and
+**Instrumentation** in README.md. Save each client measurement immediately to
+`results/` as JSONL, then save the matching Render JSON lines promptly and paste
+them as text into the README. Do not count a warm-up or the extra invalid-input
+request in the ten-run average, and do not substitute local test records for
+actual deployed logs. Formal acceptance trials remain for Milestone 5.

@@ -391,3 +391,30 @@ build, `No broken requirements found`, and `hnswlib import OK`. The build-time
 import check covers the build machine; successful indexing on the service is
 still needed to verify runtime compatibility. Full startup, real answers,
 and the 512 MB memory budget remain unverified.
+
+
+### Render indexing exceeds 512 MiB
+
+Render reported an out-of-memory kill before Gunicorn opened the HTTP port.
+The previous illegal-instruction trace identified a separate hnswlib import
+failure; this new memory error does not establish that the CPU issue persists.
+
+The ONNX adapter now feeds one paragraph at a time by default, instead of
+allowing Chroma's default inference batch of 32. `AI201_EMBED_BATCH_SIZE=1`
+is also explicit in `render.yaml`; it must be a positive integer. Larger
+values trade memory for throughput. This is inference scheduling only:
+paragraph chunking, MiniLM weights, 384-dimensional vectors, cosine retrieval,
+top-k, the relevance gate, and answer generation remain unchanged.
+
+For the existing service, keep Build Command `sh build.sh` and Start Command
+`sh start.sh`, set `AI201_EMBED_BATCH_SIZE=1`, then manually deploy the updated
+code after committing/pushing. Indexing may take longer on the Free CPU.
+A port scan message can occur while indexing; changing the port cannot fix
+an out-of-memory kill. Success requires completed indexing, Gunicorn startup,
+`index_ready: true`, and a real `/ask` response without exceeding the limit.
+
+Batching tests use a stand-in embedder and verify call sizes and vector order;
+they are not measurements of ONNX memory or real embedding equivalence.
+The 512 MiB fit remains unverified until the real service completes indexing
+and answers questions. If memory still exceeds the limit with batch size 1,
+inspect the next logs before changing the model or hosted architecture.

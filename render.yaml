@@ -15,3 +15,5 @@ services:
         value: campus_life
       - key: AI201_CACHE
         value: '0'
+      - key: AI201_EMBED_BATCH_SIZE
+        value: '1'

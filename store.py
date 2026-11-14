@@ -66,7 +66,15 @@ class _OnnxEmbedder:
         self._ef = ONNXMiniLM_L6_V2()
 
     def encode(self, texts, show_progress_bar: bool = False):
-        return [vector.tolist() for vector in self._ef(list(texts))]
+        # Chroma's internal ONNX default is 32 inputs at once. Feed smaller
+        # batches to reduce peak inference memory on the 512 MiB hosted plan.
+        texts = list(texts)
+        vectors = []
+        batch_size = config.EMBEDDING_BATCH_SIZE
+        for start in range(0, len(texts), batch_size):
+            batch = texts[start : start + batch_size]
+            vectors.extend(vector.tolist() for vector in self._ef(batch))
+        return vectors
 
 
 def _sentence_transformer(name: str):

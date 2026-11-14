@@ -58,6 +58,11 @@ THRESHOLD = 0.6
 # which needs `pip install 'sentence-transformers>=3.4,<3.5'` first. store.py
 # says so with a real error message rather than a stack trace if you forget.
 EMBEDDING_MODEL = "all-MiniLM-L6-v2"
+# Limit simultaneous embedding inputs to reduce ONNX inference memory.
+# This controls execution batching, not chunking or retrieval.
+EMBEDDING_BATCH_SIZE = int(os.getenv("AI201_EMBED_BATCH_SIZE", "1"))
+if EMBEDDING_BATCH_SIZE < 1:
+    raise ValueError("AI201_EMBED_BATCH_SIZE must be a positive integer")
 MODEL = os.getenv("AI201_MODEL", "gemini-3.5-flash-lite")
 
 

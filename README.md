@@ -323,7 +323,7 @@ Shape A (Deploy and instrument), Path A (Hosted): deploy the existing Flask API 
 **Deployment**
 
 - Set `AI201_CORPUS=campus_life` and store `GEMINI_API_KEY` as a host secret. Confirm the configured Gemini model is available to the course account.
-- On startup, build the index (`python app.py index --corpus campus_life`), then run `gunicorn --workers 1 serve:app`. Rebuild if the host's storage is wiped.
+- On startup, build the index (`python app.py --corpus campus_life index`), then run `gunicorn --workers 1 serve:app`. Rebuild if the host's storage is wiped.
 - The service is ready when `/health` returns `index_ready: true`, not just HTTP 200.
 - Usage: `POST https://<host>/ask` with `{"question": "..."}` returns the answer, sources, refusal flag, best distance, and threshold.
 

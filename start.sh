@@ -10,5 +10,5 @@ export PYTHONUNBUFFERED=1
 
 # Rebuild on every start so an empty/ephemeral disk is supported.
 # Failure stops startup rather than serving an API without an index.
-python app.py index --corpus "$AI201_CORPUS"
+python app.py --corpus "$AI201_CORPUS" index
 exec python -m gunicorn --workers 1 --bind "0.0.0.0:${PORT:-5000}" --timeout 120 serve:app

@@ -7,6 +7,9 @@ cd "$(dirname "$0")"
 : "${GEMINI_API_KEY:?Set GEMINI_API_KEY in the host secret environment}"
 export AI201_CORPUS="${AI201_CORPUS:-campus_life}"
 export PYTHONUNBUFFERED=1
+# Include a Python traceback if a native dependency aborts (e.g. SIGILL).
+# This identifies the failing call without changing the model or retrieval.
+export PYTHONFAULTHANDLER=1
 
 # Rebuild on every start so an empty/ephemeral disk is supported.
 # Failure stops startup rather than serving an API without an index.

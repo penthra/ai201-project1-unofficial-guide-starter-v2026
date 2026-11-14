@@ -10,3 +10,11 @@ HNSWLIB_NO_NATIVE=1 python -m pip install --force-reinstall --no-cache-dir --no-
 python -m pip check
 # Catch an import-time native crash during build instead of service startup.
 python -X faulthandler -c 'import hnswlib; print("hnswlib import OK")'
+
+# Package the index and embedding assets in the build artifact. Startup should
+# not repeat corpus embedding on the resource-limited web service instance.
+export AI201_CORPUS="${AI201_CORPUS:-campus_life}"
+export AI201_EMBED_CACHE_DIR="$PWD/.cache/embedding-models"
+export PYTHONUNBUFFERED=1
+export PYTHONFAULTHANDLER=1
+python app.py --corpus "$AI201_CORPUS" index

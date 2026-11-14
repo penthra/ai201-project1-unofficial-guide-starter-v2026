@@ -20,6 +20,7 @@ rest of the project if they were wrong:
 import os
 import shutil
 from dataclasses import dataclass
+from pathlib import Path
 
 # Must be set BEFORE chromadb is imported. Without it, some Chroma versions
 # print "Failed to send telemetry event ..." on every single call — which looks
@@ -64,6 +65,11 @@ class _OnnxEmbedder:
         from chromadb.utils.embedding_functions import ONNXMiniLM_L6_V2
 
         self._ef = ONNXMiniLM_L6_V2()
+        # Hosted builds store assets inside the deploy artifact, rather than
+        # relying on a build machine's home cache being present at runtime.
+        cache_dir = os.getenv("AI201_EMBED_CACHE_DIR")
+        if cache_dir:
+            self._ef.DOWNLOAD_PATH = Path(cache_dir) / BUNDLED_MODEL
 
     def encode(self, texts, show_progress_bar: bool = False):
         # Chroma's internal ONNX default is 32 inputs at once. Feed smaller

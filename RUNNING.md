@@ -418,3 +418,30 @@ they are not measurements of ONNX memory or real embedding equivalence.
 The 512 MiB fit remains unverified until the real service completes indexing
 and answers questions. If memory still exceeds the limit with batch size 1,
 inspect the next logs before changing the model or hosted architecture.
+
+
+### Current startup: index during build, open the port at startup
+
+This supersedes the earlier instructions to rebuild the index on every start.
+Use Build Command `sh build.sh` and Start Command `sh start.sh`.
+The build now creates `chroma_db/` and downloads the embedding assets under
+`.cache/embedding-models/`, inside the deploy artifact. Both scripts set
+`AI201_EMBED_CACHE_DIR` to that location; the ONNX adapter uses it when set.
+Local CLI users without this variable keep Chroma's default cache path.
+These generated files stay ignored by Git. Each new build recreates the index;
+runtime restarts reuse the deployed build's files rather than relying on
+changes saved during a previous service run.
+
+`start.sh` requires the secret and checks for the packaged SQLite index, then
+immediately launches Gunicorn on `0.0.0.0:$PORT`. It does not embed the corpus.
+The index-file check only detects an omitted build; `/health` must still report
+`index_ready: true` for the selected corpus. A first `/ask` still loads ONNX
+and embeds its question, so service memory below 512 MiB is not established
+by the server opening its port or a successful health response.
+
+Commit/push the changed scripts, adapter, and documentation, confirm the two
+Render commands above, and use Manual Deploy > Clear build cache & deploy.
+Build logs should show `stored 183 chunks` before upload; startup logs should
+then show Gunicorn `Listening at` without a second indexing run. Check `/health`
+and a real `/ask` response. Any remaining out-of-memory failure on `/ask` is a
+runtime embedding-memory issue and needs a separate measured fix.

@@ -309,3 +309,34 @@ I therefore still need to compare answers with their retrieved chunks when evalu
 I would make C4's sampling rule explicit: inspect the first retrieved chunk for each of my five questions. That would make the evaluation more consistent.
 
 For future evaluations, I would tighten C1 from 4 of 5 to 5 of 5 because my questions ask for straightforward facts explicitly present in the corpus. I would keep C5 focused on factual support rather than exact wording. The Before and After comparison still uses my original criteria and targets.
+
+## Capstone
+
+**What This Extends**
+
+My Project 1 `campus_life` RAG: paragraph chunks, Chroma cosine retrieval (top 5), a 0.6 relevance gate, and grounded answers that cite source files. `serve.py` already wraps the pipeline in Flask with `POST /ask` and `GET /health`, but it is only run locally and has no request logging.
+
+**The Shape**
+
+Shape A (Deploy and instrument), Path A (Hosted): deploy the existing Flask API at a public HTTPS URL and add structured logging to `/ask`.
+
+**Deployment**
+
+- Set `AI201_CORPUS=campus_life` and store `GEMINI_API_KEY` as a host secret. Confirm the configured Gemini model is available to the course account.
+- On startup, build the index (`python app.py index --corpus campus_life`), then run `gunicorn --workers 1 serve:app`. Rebuild if the host's storage is wiped.
+- The service is ready when `/health` returns `index_ready: true`, not just HTTP 200.
+- Usage: `POST https://<host>/ask` with `{"question": "..."}` returns the answer, sources, refusal flag, best distance, and threshold.
+
+**Logging**
+
+Each `/ask` request writes one JSON line to stdout (captured by the host's logs) with: timestamp, request ID, question, answer, model, sources, best distance, refusal flag, HTTP status, duration (ms), and error type if any. Failed and invalid requests are logged too. No secrets in logs. For measured runs, set `AI201_CACHE=0` so repeated questions reach the model. Exported log records serve as capstone evidence.
+
+**Memory Check (512 MB limit)**
+
+Query embeddings still run locally (`all-MiniLM-L6-v2` via ONNX), so I'll measure peak RAM during startup, indexing, and queries before claiming the service fits. One Gunicorn worker keeps memory down. If it exceeds 512 MB, I'll fix it within a hosted deployment.
+
+**Out of Scope**
+
+- No changes to the corpus, chunking, embeddings, retrieval, gate, or prompt.
+- No frontend, accounts, or chat history; the JSON API is the interface.
+- No dashboard or new evaluation system; instrumentation is logging only.

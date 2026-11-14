@@ -320,6 +320,10 @@ My Project 1 `campus_life` RAG: paragraph chunks, Chroma cosine retrieval (top 5
 
 Shape A (Deploy and instrument), Path A (Hosted): deploy the existing Flask API at a public HTTPS URL and add structured logging to `/ask`.
 
+**Running It**
+
+See [RUNNING.md](RUNNING.md#capstone-running-it) for the live Render URL, setup, start commands, and deployment verification status.
+
 **Deployment**
 
 - Set `AI201_CORPUS=campus_life` and store `GEMINI_API_KEY` as a host secret. Confirm the configured Gemini model is available to the course account.

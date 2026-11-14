@@ -267,8 +267,7 @@ The hosted environment must be Linux for Gunicorn; the Windows `.venv` is
 not a deployable runtime. From the repository root, install with:
 
 ```bash
-python -m pip install -r requirements-runtime.txt
-python -m pip check
+sh build.sh
 ```
 
 `requirements-runtime.txt` pins all seven direct dependencies to versions
@@ -338,7 +337,7 @@ Equivalent dashboard settings:
 | Runtime | Python |
 | Instance plan | Free |
 | Root directory | Repository root |
-| Build command | `python -m pip install -r requirements-runtime.txt && python -m pip check` |
+| Build command | `sh build.sh` |
 | Start command | `sh start.sh` |
 | Health check path | `/health` |
 | Auto-deploy | Off |
@@ -366,3 +365,29 @@ References: [Blueprint specification](https://render.com/docs/blueprint-spec),
 [compute limits](https://render.com/docs/compute-plans),
 [Free service lifecycle](https://render.com/docs/free), and
 [Python version selection](https://render.com/docs/python-version).
+
+
+### Chroma native CPU compatibility
+
+Use `sh build.sh` as Render's build command and keep `sh start.sh` as the
+start command. The reported SIGILL traceback stopped at `import hnswlib`
+inside Chroma's `local_hnsw.py`, before the embedding model was loaded.
+A build/runtime CPU instruction mismatch is the leading explanation, not a
+confirmed ONNX or memory failure.
+
+`build.sh` installs the pinned runtime, then forces a source rebuild of
+`chroma-hnswlib==0.7.6` with `HNSWLIB_NO_NATIVE=1`, bypassing cached/prebuilt
+wheels. This flag disables `-march=native` in the dependency's build script.
+It preserves dependencies with `--no-deps`, runs `pip check`, and checks that
+`hnswlib` imports. A working C++ compiler and build dependencies are required;
+compilation increases build time. No RAG algorithm, embedding model, or corpus
+changes are involved. Reference: [Chroma hnswlib build source](https://github.com/chroma-core/hnswlib/blob/master/setup.py).
+
+After committing and pushing these changes, set the existing Render service's
+Build Command to `sh build.sh` (or sync the updated Blueprint). A normal
+manual deploy alone does not necessarily apply changed Blueprint settings.
+Then use Manual Deploy > Clear build cache & deploy. Look for the source wheel
+build, `No broken requirements found`, and `hnswlib import OK`. The build-time
+import check covers the build machine; successful indexing on the service is
+still needed to verify runtime compatibility. Full startup, real answers,
+and the 512 MB memory budget remain unverified.

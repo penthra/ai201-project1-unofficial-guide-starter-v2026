@@ -160,3 +160,12 @@ All five answers should be supported by the retrieved chunks because even one in
 **C5 — Unsupported questions:** At least 4 of my 5 existing out-of-scope questions receive the required refusal, with `refused: true` in both the response and log.
 
 **Reason:** Hosting and instrumentation should preserve the original protection against unsupported answers.
+
+
+## Future target — stricter C5
+
+**C5 — Unsupported questions (future target):** All 5 of my existing out-of-scope questions must receive the required refusal in each trial, with `refused: true` in both the response and log.
+
+**Reason:** The baseline achieved 15/15 correct refusals across three trials, and these questions are clearly outside the campus corpus. Requiring 5/5 in each trial sets a stricter expectation for consistently rejecting unsupported questions.
+
+This is a separate target for future testing. The original C5 target of at least 4/5 and all recorded baseline results remain unchanged. Baseline comparisons continue to use the original target; report any future evaluation against the stricter target separately.

@@ -320,7 +320,9 @@ My Project 1 `campus_life` RAG: paragraph chunks, MiniLM embeddings, Chroma cosi
 
 Shape A (Deploy and instrument), Path A (Hosted): make the existing RAG available at a public URL and record each request in structured logs.
 
-### Running It
+Scope: keep the existing RAG behavior; use the JSON API without a custom frontend; limit instrumentation to logs, without a new dashboard or scoring system.
+
+**Running It**
 
 **Live API:** https://campus-life-rag.onrender.com
 
@@ -332,9 +334,9 @@ Shape A (Deploy and instrument), Path A (Hosted): make the existing RAG availabl
 | Health | `GET /health`; check `index_ready: true` |
 | Ask | `POST /ask` with `{"question":"When can students purchase a parking permit?"}` |
 
-See [RUNNING.md](RUNNING.md#capstone-running-it) for setup, Python/dependency pins, and environment variables. Store `GEMINI_API_KEY` privately in Render. Query embeddings run inside the service; peak Render RAM against the 512 MiB limit remains unmeasured.
+See [RUNNING.md](RUNNING.md#capstone-running-it) for the working live request, Render configuration, tested local setup, and verification limits. Store `GEMINI_API_KEY` privately in Render. Query embeddings run inside the service; peak Render RAM against the 512 MiB limit remains unmeasured.
 
-### Instrumentation
+**Instrumentation**
 
 Each `POST /ask` writes one JSON record to stdout. Read it in **Render → service → Logs**, searching for `rag_request`. Match the response's `X-Request-ID` to the log's `request_id`.
 
@@ -356,15 +358,20 @@ The table extracts ten actual measured requests and one rejection from the saved
 | 10 | Campus Wi-Fi | Student account | 200 | 5250.160 | `47bef557` |
 | Rejected | Non-string question | ValidationError | 400 | 0.216 | `20b828d9` |
 
-### What It Costs
+**What It Costs**
 
-**Average client elapsed time: 3.695 seconds/request** over ten live requests. Total 36.954 seconds ÷ 10; all ten returned HTTP 200.
+Measured ten uncached warm requests: **3.695436 seconds/run** average client elapsed time. Arithmetic: `36.954362995 seconds ÷ 10 runs = 3.6954362995 seconds/run`.
 
-The five Project 1 questions were sent twice, sequentially, after one successful warm-up. Timing covered dispatch through the complete response, including network and server work. The warm-up (15.273 seconds) and rejected request were excluded. Response caching was disabled.
+The five Project 1 questions were sent twice, sequentially, after one successful warm-up. A monotonic clock measured dispatch through the full response, including network and server work. The 15.273-second warm-up and rejected request were excluded. Mean server handling time was **3.661482 seconds/run**, measured separately. [Raw measurements and method](results/hosted_cost_20261114T211124Z.summary.json).
 
-Mean server handling time was **3.661 seconds/request**. Client and server clocks are separate; differences are documented in the [measurement summary](results/hosted_cost_20261114T211124Z.summary.json). API dollars and tokens were not measured.
+For **100 people/day at one run each**:
 
-### Run Log and Verdicts
+- `100 people/day × 1 run/person = 100 runs/day`
+- `100 runs/day × 3.6954362995 seconds/run = 369.54362995 seconds/day ≈ 6.16 minutes/day`
+
+This is projected aggregate request elapsed time under similar warm, sequential conditions—not CPU time, hosting uptime, a tested concurrency capacity, or a dollar bill. Cold starts and simultaneous traffic may differ. API spend and tokens were not measured, so no monetary estimate is claimed.
+
+**Run Log and Verdicts**
 
 Original targets were committed in `6f8923e` before testing. The unchanged deployed revision was user-confirmed as `1694a57`; its SHA is not exposed by the public API. Answer support was manually reviewed against tracked corpus text in the returned sources.
 
@@ -382,8 +389,32 @@ Run 2's dining answer took **6.783 seconds** and remains a counted miss; the ori
 
 [Final report and actual output](results/formal_test_01/final_report.md) · [Repeatable protocol](results/formal_test_01/protocol.md) · [Inputs](results/formal_test_01/inputs.json) · [Verdicts](results/formal_test_01/final_verdicts.json) · [All formal evidence](results/formal_test_01/)
 
-### Scope Limits
+**The Improvement**
 
-- Keep the existing corpus, chunking, embeddings, retrieval, gate, and prompt.
-- Use the JSON API; no custom frontend, accounts, or chat history.
-- Use structured logs; no analytics dashboard or new scoring system.
+**Proposed, not implemented or measured:** add `retrieval_ms` and `generation_ms` to the existing request logs. The 6.783-second dining answer shows a slow request, but total duration cannot identify its bottleneck. Separate timings would show where to focus a later change.
+
+The baseline has three trials per criterion. **There is no second three-trial result set or measured post-baseline improvement.** The stricter future C5 target is a target change, not an implementation improvement. These submission requirements remain incomplete; the earlier startup fixes and repeated baseline observations are not presented as a before/after study.
+
+**What's Still Broken**
+
+All five original criteria passed, but these limitations remain:
+
+| Observation or gap | What could address it |
+| --- | --- |
+| One warm answer took 6.783 seconds, exceeding the per-question limit | Add stage timings; then optimize the measured slow stage, such as retrieval/client reuse or generation length. Any speed benefit needs measurement. |
+| The initial restart attempt returned HTTP 502; completion timing and cause were uncertain | Record confirmed restart completion and correlate proxy, worker, and application logs; improve readiness/model initialization if that evidence identifies a startup gap. |
+| Full local answer generation failed with `API_KEY_INVALID` | Supply a valid exported local `GEMINI_API_KEY` and repeat the local smoke check when resuming. The hosted key worked. |
+| No measured improvement or second formal trial set | Implement one small change and repeat the frozen three-trial protocol on a separately named version. This has not been done. |
+
+**Why I stopped:** I did not have enough time, and I chose not to do the improvement/retest cycle.
+
+**First next step:** add retrieval/generation timings. They address the observed slow request while keeping the RAG unchanged and would guide a later measured improvement.
+
+**Future tighter target:** require **5/5** unsupported questions to be refused in every trial, instead of 4/5, with `refused: true` in response and log. The baseline already achieved 15/15. This separate [future C5 target](criteria.md) leaves the original criteria and results intact.
+
+**How I Used AI**
+
+| What I asked | What AI provided | What I changed or accepted |
+| --- | --- | --- |
+| I pasted Render's illegal-instruction traceback and asked for deployment help. | It identified the crash at Chroma's `hnswlib` import and proposed a portable source build. | I used `build.sh` to rebuild `chroma-hnswlib` with `HNSWLIB_NO_NATIVE=1` and set Render's build command to that script. The change is recorded in `6d6b26a`. |
+| I asked for help drafting capstone criteria, reviewed the remaining drafts, and later asked about a tighter target. | It drafted criterion wording and suggested a separate 5/5 C5 target after the 15/15 baseline. | I selected the questions and warm-request target, approved the drafts, and saved the future C5 target separately without changing the baseline. The criteria were AI-assisted, not wholly independently worded. |

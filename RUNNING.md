@@ -1,86 +1,120 @@
-# Running this project
+# Running the Campus Life RAG
 
 ## Capstone: Running It
 
-Shape A (Deploy and instrument), hosted Path A. Hosting platform: **Render**.
-Live URL: **https://campus-life-rag.onrender.com** (from the established service
-in this conversation; the latest request contained a URL placeholder).
-This is a JSON API, with `GET /health` and `POST /ask`; `/` has no question form.
-Keep the existing service in place. This guide does not require creating a new
-service, changing plans, or running formal trials.
+CodePath AI201 Project 1 extension: **Shape A — Deploy and instrument; Path A — Hosted**.
+The existing Flask API calls the original `app.py::ask_pipeline`.
 
-### Deployment version and settings
+### 1. Try the live app
 
-| Item | Verified state |
-| --- | --- |
-| Repository revision tested in a separate clean clone | `efa901e55ea2d7e68496b22457b91276ac9d1bbc` |
-| Actual deployed Git revision | **Not independently verified.** The public API exposes no commit SHA. |
-| Repository build command | `sh build.sh` in `render.yaml` |
-| Repository start command | `sh start.sh` in `render.yaml` |
-| Actual Render dashboard build/start commands | **Awaiting dashboard confirmation.** Repository configuration alone does not establish the service settings. |
-| Repository runtime/plan | Python / Free; dashboard plan remains unconfirmed. |
-| Repository Python pin | `3.13.7` in `.python-version` |
-| Clean-checkout Python tested | CPython **3.13.7**, Linux x86_64, Debian Bookworm container |
-| Hosted Python version | Earlier supplied crash logs showed Python 3.13.7; current live deployment's version still needs its build-log confirmation. |
-| Health-check path configured in repo | `/health`; inspect JSON `index_ready`, not only HTTP 200. |
+**Render URL:** https://campus-life-rag.onrender.com
 
-`criteria.md` exists in Git. Its five Project 1 acceptance criteria were committed
-in `1cc0672c720721a809f8ba16748ebf3de3f64b11` ("Milestone 2: Write your acceptance
-criteria"). No separate capstone criteria commit was found. The user explicitly
-authorized smoke checks as an exception to the earlier criteria-before-runs
-requirement. These checks are not the Milestone 5 formal trials.
-
-To finish verifying the existing deployment, copy the following from Render:
-
-1. Events/Deploys: the **full Git commit SHA of the currently live deploy**,
-   not a failed or superseded deploy.
-2. Settings: the exact **Build Command** and **Start Command** text, runtime,
-   instance plan, and health-check path.
-3. The current successful deploy's build log line showing its **Python version**.
-4. Environment: **variable names only**. Do not share values, API keys, secret
-   files, database URLs, or deploy-hook URLs.
-
-### What the commands do
-
-`sh build.sh` installs `requirements-runtime.txt`, rebuilds
-`chroma-hnswlib==0.7.6` from source with `HNSWLIB_NO_NATIVE=1`, checks dependencies
-and native import, then indexes `campus_life`. This avoids the previously seen
-illegal instruction from a CPU-specific native library. It requires a C++
-compiler, Python development headers, and outbound access to package/model hosts.
-Indexing produced **183 chunks from 88 documents** in the clean test.
-
-The build packages `chroma_db/` and `.cache/embedding-models/`. `sh start.sh`
-checks for the packaged index and an exported `GEMINI_API_KEY`, then executes:
+This is a JSON API. Use `/ask` for questions; the root `/` has no form.
 
 ```bash
-python -m gunicorn --workers 1 --bind "0.0.0.0:${PORT:-5000}" --timeout 120 serve:app
+curl --silent --show-error --max-time 55 \
+  --request POST https://campus-life-rag.onrender.com/ask \
+  --header 'Content-Type: application/json' \
+  --data '{"question":"When can students purchase a parking permit?"}'
 ```
 
-Startup does not re-embed the corpus. Render supplies `PORT`; the local default
-is 5000. `serve.py` imports and calls `app.ask_pipeline`, the same handler used
-by the original CLI. Neither the original RAG algorithm nor CLI was replaced.
+The endpoint is **POST `/ask`**, with a JSON body containing `question`.
+Verified on November 14, 2026 (Pacific): **HTTP 200**, with this actual answer:
 
-### Local setup (Linux or WSL)
+> Student permits for the west lots go on sale in August (admin_parking_permits.txt).
 
-Use Python **3.13.7**; `.python-version` records the selection but does not
-install Python. Gunicorn's documented path here is Linux; native Windows and
-macOS setup were not tested. On Debian-based systems, install a C++ compiler
-and development headers appropriate to the selected Python first.
+The response had `refused: false`, `best_distance: 0.4196`, `threshold: 0.6`,
+and `admin_parking_permits.txt` among its sources. Client elapsed time was
+**15.765645 seconds**; initial cold/warm state was unknown. This was a functional
+check, not another formal latency trial.
 
-From a clean clone of this repository, with Python 3.13.7 selected:
+Readiness check:
+
+```bash
+curl --silent --show-error --max-time 55 \
+  https://campus-life-rag.onrender.com/health
+```
+
+Verified response: HTTP 200 with `corpus: campus_life`, `status: ok`,
+`detail: ready`, and **`index_ready: true`**. That flag confirms the index,
+not that the embedding model is already loaded or a Gemini call will succeed.
+First requests can be slower while the free service starts or loads assets.
+
+### 2. Reproduce the Render configuration
+
+The owner reports that the existing service uses this repository's configuration.
+The following settings are read from `render.yaml` and the scripts; they have
+not been independently copied from the current Render dashboard.
+
+| Setting | Repository configuration |
+| --- | --- |
+| Service | Existing `campus-life-rag` Render Web Service |
+| Runtime / plan | Python / Free |
+| Root directory | Repository root, containing `render.yaml` |
+| Python | `3.13.7` from `.python-version` |
+| Build command | `sh build.sh` |
+| Start command | `sh start.sh` |
+| Health check path | `/health` |
+| Automatic deploys | Off |
+
+`build.sh` installs the exact direct dependency pins, rebuilds
+`chroma-hnswlib` for a portable CPU target, checks dependencies/imports, and
+builds the index and model cache. `start.sh` checks the key and built index,
+then launches one Gunicorn worker serving `serve:app`, bound to `0.0.0.0` on
+Render's supplied port. Startup does not repeat corpus indexing.
+
+**Environment variable names only:** set manual variables in
+**Render Dashboard → campus-life-rag → Environment**. Keep non-secret settings
+from `render.yaml`; supply the API key privately. No credential values belong
+in Git, this guide, screenshots, or chat.
+
+| Name | Required / where it comes from |
+| --- | --- |
+| `GEMINI_API_KEY` | Required secret; enter privately in Render Environment. |
+| `AI201_CORPUS` | Non-secret selection defined in `render.yaml`; scripts also have a default. |
+| `AI201_CACHE` | Non-secret response-cache setting defined in `render.yaml`. |
+| `AI201_EMBED_BATCH_SIZE` | Non-secret memory-control setting defined in `render.yaml`. |
+| `AI201_MODEL` | Optional override supported by `config.py`; only set if needed. |
+| `PORT` | Supplied by Render; do not replace it to fix a startup failure. |
+| `PYTHON_VERSION` | Optional Render override, if present; it must agree with the intended Python pin. |
+
+The scripts set `AI201_EMBED_CACHE_DIR`, `PYTHONUNBUFFERED`, and
+`PYTHONFAULTHANDLER` themselves. `build.sh` sets `HNSWLIB_NO_NATIVE` for the
+portable native build. Do not enable the staff-only `AI201_FAKE_EMBEDDINGS`.
+
+**Still needed for independent dashboard verification:** copy the currently
+Live deploy's full Git SHA, Settings → **Build Command**, **Start Command**,
+**Runtime**, **Instance Type**, and **Health Check Path**; the Python version
+line from that successful build; and Environment **names only**. The public
+API does not expose these settings or its Git SHA. Earlier baseline revision
+`1694a57` was user-attested; the clean checkout below is a repository revision,
+not proof of what Render is currently running. Do not send secret values.
+
+### 3. Run locally after a clean setup
+
+**Tested environment:** CPython **3.13.7**, Linux x86_64, Debian Bookworm.
+Use Linux or WSL for this Gunicorn path. Native Windows and macOS were not tested.
+A C++ compiler, matching Python development headers, outbound package/model
+access, and writable repository/cache directories are needed.
+
+From a fresh clone, select Python 3.13.7 first. `.python-version` records the
+version but does not install it. Then run from the repository root:
 
 ```bash
 python --version
 python -m venv .venv
 . .venv/bin/activate
-export AI201_CORPUS=campus_life
-export AI201_CACHE=0
-export AI201_EMBED_BATCH_SIZE=1
 sh build.sh
 ```
 
-Provide a valid Gemini key privately in your terminal. In Bash, this prompt
-avoids entering its value as a shell-history command:
+`sh build.sh` is the dependency installation and asset-preparation command.
+It runs `python -m pip install -r requirements-runtime.txt`, rebuilds the
+portable native library, runs `pip check`, and indexes the corpus. Expect
+`No broken requirements found`, `hnswlib import OK`, and `stored 183 chunks`.
+
+Provide a valid Gemini API key **locally**. Having it only in Render does not
+make it available on your laptop. In Bash, enter it without recording the
+value in a command-history assignment:
 
 ```bash
 read -r -s -p 'Gemini API key: ' GEMINI_API_KEY
@@ -88,28 +122,24 @@ printf '\n'
 export GEMINI_API_KEY
 ```
 
-One exact local start command after setup:
+**Exact start command after setup**, with the virtual environment active:
 
 ```bash
 sh start.sh
 ```
 
-The start script requires an **exported** key; it does not source `.env`.
-`config.py` can read an ignored `.env` for ordinary CLI/development use, but
-that alone does not satisfy the shell script's secret check. Never commit
-`.env`, model assets, index files, or response caches.
+It listens on `http://127.0.0.1:5000` unless a port is supplied. In another
+terminal, use the live curl commands above with that local origin. A valid
+local key is needed for an in-corpus generated answer.
 
-The clean-checkout test used the isolated Python container's interpreter
-instead of a nested venv. The same `sh build.sh` and `sh start.sh` commands
-were exercised against the committed source, with no project dependencies,
-model cache, index, or secrets copied into the checkout beforehand.
+The shell script requires an **exported** key; it does not source `.env`.
+Although `config.py` supports an ignored `.env` for CLI/development use,
+a file alone does not satisfy `start.sh`'s shell-level check. Keep `.env`,
+`.venv`, model assets, and `chroma_db/` out of Git.
 
-### Dependencies and model assets
+#### Pinned dependencies
 
-`requirements-runtime.txt` pins these direct dependencies and retains the
-course ranges in `requirements.txt` as constraints:
-
-| Dependency | Pin |
+| Package | Exact runtime pin |
 | --- | --- |
 | python-dotenv | 1.1.1 |
 | chromadb | 0.6.3 |
@@ -118,245 +148,72 @@ course ranges in `requirements.txt` as constraints:
 | rank-bm25 | 0.2.2 |
 | Flask | 3.1.3 |
 | Gunicorn | 23.0.0 |
+| chroma-hnswlib | 0.7.6, explicitly rebuilt by `build.sh` |
 
-`build.sh` explicitly rebuilds `chroma-hnswlib==0.7.6`. The clean Linux install
-also resolved `onnxruntime==1.32.0` and `numpy==2.5.4`. These two are observed
-versions, not additional pins: **transitive dependencies are not fully locked**.
-`python -m pip check` reported no broken requirements.
+`requirements-runtime.txt` retains the course ranges as constraints. These
+are direct pins, **not a complete transitive lockfile**. The clean test also
+resolved ONNX Runtime 1.32.0 and NumPy 2.5.4; those are observed versions,
+not additional pins. Installing only the course ranges skips the exact direct
+pins and portable-native rebuild used by the documented build path.
 
-Embeddings use **all-MiniLM-L6-v2**, locally through ONNX, with 384 dimensions.
-The hosted adapter defaults to a batch size of one to limit inference memory.
-The build downloads the archive from Chroma's CDN:
+#### Required model assets
+
+Embeddings use **all-MiniLM-L6-v2**, a local ONNX model producing 384-dimensional
+vectors. The build downloads its archive from:
 `https://chroma-onnx-models.s3.amazonaws.com/all-MiniLM-L6-v2/onnx.tar.gz`.
-Measured sizes in the clean build:
+No manual model-file copy is required. Measured clean-download sizes:
 
-| Asset | Bytes | Approximate size |
-| --- | ---: | ---: |
-| Download archive `onnx.tar.gz` | 83,178,821 | 79.33 MiB |
-| Extracted `onnx/model.onnx` | 90,387,606 | 86.20 MiB |
-| All extracted model/tokenizer files | 91,332,068 | 87.10 MiB |
-| Archive plus extracted files retained in cache | 174,510,889 | 166.43 MiB |
-| Generated Chroma index files, including SQLite | 2,593,508 | 2.47 MiB |
+| File | Bytes |
+| --- | ---: |
+| `onnx.tar.gz` | 83,178,821 |
+| `onnx/model.onnx` | 90,387,606 |
+| `onnx/tokenizer.json` | 711,661 |
+| `onnx/vocab.txt` | 231,508 |
+| `onnx/config.json` | 650 |
+| `onnx/tokenizer_config.json` | 518 |
+| `onnx/special_tokens_map.json` | 125 |
 
-Required companion files are `tokenizer.json`, `vocab.txt`, `config.json`,
-`special_tokens_map.json`, and `tokenizer_config.json`. Index size can change
-with SQLite bookkeeping and corpus updates. Disk size is not process RAM.
-Generation calls Google's hosted Gemini API; no generation model weights or
-optional sentence-transformers/PyTorch installation are needed.
+The archive is **79.33 MiB**; extracted files total **87.10 MiB**. Both are
+retained, requiring about **166.43 MiB** of model-cache disk space, plus the
+index and Python packages. The clean index occupied about **2.47 MiB**.
+These are disk sizes, not RAM requirements.
 
-### Environment variable names
+Both scripts use `.cache/embedding-models/all-MiniLM-L6-v2/` in the build/runtime
+artifact and `chroma_db/` for the generated index. The corpus documents are
+already tracked under `corpora/campus_life/documents/`. Generation uses Google's
+hosted Gemini API; `config.py` defaults to `gemini-3.5-flash-lite`. No local
+Gemini weights, sentence-transformers, or PyTorch installation is required.
 
-| Name | Purpose |
+#### Clean-checkout verification
+
+A new separate clone of **`5e26c4718212816f89e888f8ec7b65208bc66ec1`** was made at
+`/tmp/ai201-running-check-kaTjmf/repo`. No dependency environment, index, model
+cache, or credentials were copied from the working repo. The following
+commands were actually exercised in the fresh Python 3.13.7 container:
+
+| Check | Result |
 | --- | --- |
-| `GEMINI_API_KEY` | Required exported secret for the start script and Gemini API. Supply privately. |
-| `AI201_CORPUS` | Corpus selection; scripts default to `campus_life`. |
-| `AI201_MODEL` | Optional Gemini model override; repo default is `gemini-3.5-flash-lite`. Actual live model cannot be read from the API. |
-| `AI201_CACHE` | Response cache switch; repo Render configuration sets `0` for uncached smoke/evaluation runs. |
-| `AI201_EMBED_BATCH_SIZE` | Positive embedding batch size; repo Render configuration sets `1`. |
-| `PORT` | Host-provided HTTP port; local fallback 5000. |
-| `AI201_EMBED_CACHE_DIR` | Set by both scripts to `$PWD/.cache/embedding-models`; not a secret. |
-| `PYTHONUNBUFFERED`, `PYTHONFAULTHANDLER` | Set by scripts for immediate output and native-crash traceback diagnostics. |
-| `AI201_DEBUG` | Local Flask development option only; leave unset for Gunicorn. |
-| `ANONYMIZED_TELEMETRY` | Disabled by `store.py` unless already supplied. |
+| Create and activate a venv | Passed; system site-packages disabled. |
+| `sh build.sh` | Passed pinned install, portable compilation/import, and dependency check. |
+| Real model download and index build | Passed: 88 documents → 183 chunks. |
+| `sh start.sh` | Passed; Gunicorn started on the local port. |
+| Local `/health` | HTTP 200, `index_ready: true`. |
+| Local `/ask` with an unrelated question | HTTP 200, exact refusal, `refused: true`, and an application request ID. Real ONNX retrieval was used. |
+| Health after the request | HTTP 200; no OOM kills in the 512 MiB runtime container. |
 
-Do not enable the staff-only `AI201_FAKE_EMBEDDINGS` switch for real runs.
-The actual names configured in Render remain pending dashboard confirmation;
-the table describes variables supported/set by this repository, not an export
-of Render's environment. No secret values are needed for that confirmation.
+A placeholder key was used only to satisfy the startup guard. The unrelated
+question was rejected before Gemini generation, so **full local generated
+answers were not tested with a valid key**. The real campus answer was verified
+at the live Render URL instead. Peak hosted RAM, concurrent traffic, a new
+Render deployment, and native Windows/macOS startup were not tested. The
+container's build phase was not constrained to 512 MiB. This was a functional
+setup check, not a repetition of formal acceptance trials.
 
-### Send a question
+### Logs and further evidence
 
-From Bash or a terminal with curl:
-
-```bash
-curl --max-time 60 --silent --show-error \
-  https://campus-life-rag.onrender.com/health
-
-curl --max-time 60 --silent --show-error \
-  -X POST https://campus-life-rag.onrender.com/ask \
-  -H 'Content-Type: application/json' \
-  --data '{"question":"When can students purchase a parking permit?"}'
-```
-
-For the local service, substitute `http://127.0.0.1:5000` for the Render origin.
-A valid response includes `answer`, `sources`, `refused`, `best_distance`,
-`threshold`, and `corpus`. A relevance-gate refusal is a normal HTTP 200.
-
-### Verification record — November 14, 2026 (America/Los_Angeles)
-
-- Live: one real parking-permit question returned **HTTP 200 in 4.360 seconds**:
-  `Student permits for the west lots go on sale in August (admin_parking_permits.txt).`
-  The answer agrees with the local corpus source. The response had
-  `refused: false`, `best_distance: 0.4196`, and `threshold: 0.6`.
-- Live health afterward: **HTTP 200**, `corpus: campus_life`,
-  `index_ready: true`, `detail: ready`.
-- Separate clean clone of the revision above: pinned install, portable native
-  compilation/import, dependency check, real ONNX download, and indexing passed.
-  The index contained 183 chunks. No stand-in embeddings were used.
-- Local `sh start.sh`: Gunicorn and `/health` passed under a **512 MiB Docker
-  memory limit**. A real campus question reached Gemini, but returned HTTP 500
-  because the local credential was rejected upstream with **API_KEY_INVALID**.
-  No credential values were printed or written into the clean checkout.
-  Full local answer generation therefore remains blocked on a valid local key;
-  the hosted key worked for the live question. Do not paste either key here.
-- Local service remained healthy after the failed generation request. Sampled
-  container memory was **387.2 MiB / 512 MiB** after model initialization;
-  cgroup counters showed no OOM or OOM kill. This is a point-in-time sample,
-  not peak RAM or evidence of Render memory headroom under concurrent traffic.
-- Actual deployed commit, dashboard commands/environment names, current hosted
-  Python/model, and Render peak-memory measurements remain unverified pending
-  the dashboard details above. No service settings were changed and no deploy
-  was triggered. Structured request logging is still unfinished in `serve.py`.
-
-Formal repeated trials and criterion scoring are reserved for **Milestone 5**.
-
-## Original Project 1 CLI
-
-After dependency setup, the original CLI remains available:
-
-```bash
-python app.py --corpus campus_life index
-python app.py --corpus campus_life ask "When can students purchase a parking permit?"
-python app.py --corpus campus_life retrieve "When can students purchase a parking permit?"
-```
-
-The CLI uses Chroma's normal home cache unless `AI201_EMBED_CACHE_DIR` is set.
-Use the build script when preparing assets for `sh start.sh`. `python serve.py`
-is a local Flask development server, while `sh start.sh` is the tested Gunicorn
-start path. Do not run `run_eval.py` as part of this smoke check; formal trials
-remain separate.
-
-
-## Structured logging: redeploy before cost evidence
-
-The five capstone criteria are now committed in `6f8923e` (`criterion`). The
-older verification record above describes the earlier repository state.
-
-`serve.py` now uses Flask before/after-request hooks to emit one JSON line to
-stdout per `POST /ask`, covering normal responses, gate refusals, HTTP 400
-validation rejections, and handled pipeline errors. A generated `X-Request-ID`
-response header matches `request_id` in the log. `duration_ms` uses a monotonic
-clock and covers server request handling; it excludes client/network time and
-is not a token or billing measurement. The `model` field is the configured
-model name. `cache_enabled` records the actual server cache configuration.
-No environment values, system prompts, or exception messages are logged.
-
-Push the changed `serve.py` and the accompanying README/RUNNING documentation,
-then manually deploy the latest commit on the **existing** Render service.
-Keep Build Command `sh build.sh`, Start Command `sh start.sh`, and
-`AI201_CACHE=0`. No new service or plan change is needed. Neither Git actions
-nor deployment is performed by this preparation step.
-
-After deployment, check both a normal `/ask` response and an invalid request
-such as `{"question":123}`. Each should have `X-Request-ID`; Render > existing
-service > Logs should show exactly one `rag_request` JSON line with the matching
-ID and HTTP status. Copy the JSON **message** text, not screenshots or secrets.
-The platform's `Rndr-Id` header is different from the application's request ID.
-Runtime stdout logs are private to your Render account and cannot be fetched
-from the public `/ask` endpoint. See https://render.com/docs/logging.
-
-Once live logging is confirmed, collect the ten-run warm elapsed-time sample
-and the extra failed/rejected record described under **What It Costs** and
-**Instrumentation** in README.md. Save each client measurement immediately to
-`results/` as JSONL, then save the matching Render JSON lines promptly and paste
-them as text into the README. Do not count a warm-up or the extra invalid-input
-request in the ten-run average, and do not substitute local test records for
-actual deployed logs. Formal acceptance trials remain for Milestone 5.
-
-
-### Live cost measurement and log export — November 14, 2026
-
-The new request-ID behavior is live. Ten sequential measured requests after
-one excluded successful warm-up all returned HTTP 200. Mean client-observed
-elapsed time was **3.695436 seconds/request**. The matching server log mean
-was **3.6614819 seconds/request** (3661.4819 ms), measured by the handler.
-Neither metric measures API spend or tokens.
-
-Each client's full response and timing was synced to
-[client JSONL](results/hosted_cost_20261114T211124Z.jsonl) immediately.
-The user then supplied actual `rag_request` messages from Render's private
-Logs page. Those thirteen messages are preserved in
-[server JSONL](results/hosted_cost_20261114T211124Z.render.jsonl), including
-an initial rejected preflight, the warm-up, ten measured requests, and the
-extra invalid-input request. All ten measured responses match the server
-records by ID and response fields. Cache-disabled status is verified in all
-ten; their configured model is `gemini-3.5-flash-lite`. The extra rejection
-returned HTTP 400 and logged `ValidationError`.
-
-README's **Instrumentation** now pastes the ten actual server records plus
-the rejection as JSONL text. **What It Costs** describes units, calculation,
-warm conditions, and exclusions. The [summary](results/hosted_cost_20261114T211124Z.summary.json)
-retains both averages. Two measured server durations and the warm-up exceed
-the corresponding client durations; the timing discrepancy is unexplained.
-The two clock series must not be subtracted to derive network overhead.
-
-No requests were repeated to recover server evidence. The service was left
-in place, and no deploy or Git write action was performed. Formal acceptance
-trials remain for Milestone 5. Current hosted revision, peak RAM, API spend,
-and token counts remain outside what this measurement establishes.
-
-
-## Capstone criteria: implementation coverage
-
-The five approved criteria in `criteria.md` have implementation support.
-This audit checks readiness to verify them; it does not declare that they
-passed formal acceptance trials or guarantee the latency target.
-
-| Criterion | Existing implementation | What remains to verify live |
-| --- | --- | --- |
-| C1: supported answers within five seconds on warm requests | `serve.ask` calls the original `app.ask_pipeline`; `generate.build_prompt` supplies retrieved text, and the grounding instruction requires supported answers. The HTTP response and log expose sources, distance, and outcome; the log has `duration_ms`. | Warm the service first, then time the five Project 1 questions and review factual support using the retrieved material. Use client elapsed time for the user-visible limit, not the server timer. Model quality and a five-second limit cannot be guaranteed by a code check. |
-| C2: exactly one complete JSON log per request | `start_ask_log` and `finish_ask_log` wrap each `POST /ask`. Each completed request prints one JSON record with all required fields and a matching `X-Request-ID`. | Match the five actual responses to the exported Render JSON lines and check one record per ID. The existing cost evidence already demonstrates this logging path, but it is not formal scoring. |
-| C3: readiness and a sourced answer after restart | `build.sh` packages the real index and model assets; `start.sh` reuses those artifacts and starts one worker. `/health` checks the selected Chroma collection through `store.index_exists`. | Perform the approved restart of the existing Render service, then check `index_ready: true` and ask the parking question. No actual Render restart was performed during this audit. |
-| C4: rejected non-string input, then continued service | `serve.ask` rejects non-string questions before invoking the pipeline; the after-request hook logs HTTP 400 with `ValidationError`. Request-local Flask `g` state prevents one error from contaminating the next request. | Verify a non-string request and its error record, followed by a successful real question. Local checks cover this sequence with controlled retrieval/generation. |
-| C5: refusals appear in response and log | `gate.check` rejects distances at/above the threshold or empty results. `ask_pipeline` returns the exact `gate.REFUSAL` and skips generation; the response and completion log copy the refusal flag. | Use the five existing `OUT_OF_SCOPE` questions against the real index and compare the response and log. Controlled local distances cannot establish real embedding quality for those questions. |
-
-No production implementation gap was found in this audit, so no RAG behavior,
-model, retrieval parameter, start command, or live service was changed just to
-make a check pass. In particular, forcing a short timeout would not guarantee
-a supported answer within the C1 limit. Actual acceptance verdicts belong to
-the later formal trials.
-
-### Repeatable local implementation checks
-
-After installing the project dependencies in the selected Python environment:
-
-```bash
-python -m unittest discover -s tests -p 'test_capstone_contracts.py' -v
-```
-
-The eight checks in `tests/test_capstone_contracts.py` passed during this
-audit. They exercise the real HTTP handler, original pipeline, gate, and prompt
-builder, using controlled stand-ins only for retrieval and answer generation.
-They check a supported-answer path, one complete log, input rejection followed
-by recovery, refusal with no generation call, empty retrieval, handled errors,
-health flags, and startup-script artifact/port handling. The startup checks use
-a stand-in executable and a placeholder index file: they check shell wiring,
-not actual SQLite persistence or a restart of Render. These checks make no
-network/API calls, download no models, require no secret values, and do not
-score the five acceptance criteria.
-
-The audit ran with host Python 3.12.3 and Flask dependencies available from the
-existing local environment; the deployed runtime remains pinned to Python
-3.13.7. The earlier clean-checkout build used that pinned version. Changes
-from this audit are the new local check script and updated documentation;
-there is no production-code change to redeploy from this audit.
-
-
-## First formal test completed
-
-See README's **Run Log and Verdicts** and
-[results/formal_test_01/final_report.md](results/formal_test_01/final_report.md).
-The original criteria commit `6f8923e` predates the runs. Application/criteria
-hashes remained frozen at user-attested deployed revision `1694a57`.
-All five criteria are MET across three valid observations each; C1 achieved
-5/5, 4/5, 5/5 within the original time/support target. Complete actual client
-responses, commands, source reviews, and exported server JSON are saved.
-
-The ambiguous original third-restart HTTP 502 is retained. A user-corrected
-restart-completion assumption led to a separate recovery and a predeclared,
-explicitly confirmed C3-only completion check. The final report describes this
-protocol clarification, source-file review limitation, and user-attested
-version/restart provenance. No failure was silently replaced. Retest inputs
-and method are preserved in results/formal_test_01/protocol.md and inputs.json;
-use a new evidence directory for any later changed version. No application
-code or deployment changes were made, and no fixes/retest were started.
+In the existing Render service's **Logs** page, search for `rag_request`.
+Every `POST /ask` logs one JSON completion record; its `request_id` matches
+the response's `X-Request-ID`. Health traffic is separate. The original
+baseline results, log tables, cost measurements, and submission limitations
+remain in the README and linked `results/` evidence. This guide does not
+create another Render service, trigger a deploy, or perform Git actions.

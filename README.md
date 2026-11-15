@@ -314,69 +314,76 @@ For future evaluations, I would tighten C1 from 4 of 5 to 5 of 5 because my ques
 
 **What This Extends**
 
-My Project 1 `campus_life` RAG: paragraph chunks, Chroma cosine retrieval (top 5), a 0.6 relevance gate, and grounded answers that cite source files. `serve.py` already wraps the pipeline in Flask with `POST /ask` and `GET /health`, but it is only run locally and has no request logging.
+My Project 1 `campus_life` RAG: paragraph chunks, MiniLM embeddings, Chroma cosine retrieval (top 5), a 0.6 relevance gate, and answers with source citations.
 
 **The Shape**
 
-Shape A (Deploy and instrument), Path A (Hosted): deploy the existing Flask API at a public HTTPS URL and add structured logging to `/ask`.
+Shape A (Deploy and instrument), Path A (Hosted): make the existing RAG available at a public URL and record each request in structured logs.
 
-**Running It**
+### Running It
 
-See [RUNNING.md](RUNNING.md#capstone-running-it) for the live Render URL, setup, start commands, and deployment verification status.
+**Live API:** https://campus-life-rag.onrender.com
 
-**Deployment**
+| Setting | Configuration |
+| --- | --- |
+| Host | Render Free Web Service |
+| Build | `sh build.sh` — installs dependencies and builds the index/model assets |
+| Start | `sh start.sh` — starts one Gunicorn worker on Render's port |
+| Health | `GET /health`; check `index_ready: true` |
+| Ask | `POST /ask` with `{"question":"When can students purchase a parking permit?"}` |
 
-- Set `AI201_CORPUS=campus_life` and store `GEMINI_API_KEY` as a host secret. Confirm the configured Gemini model is available to the course account.
-- Build with `sh build.sh` to package the index and embedding assets. Start with `sh start.sh` to launch one Gunicorn worker on Render's port without repeating indexing. Each deploy rebuilds the artifacts; restarts reuse the deployed build.
-- The service is ready when `/health` returns `index_ready: true`, not just HTTP 200.
-- Usage: `POST https://<host>/ask` with `{"question": "..."}` returns the answer, sources, refusal flag, best distance, and threshold.
+See [RUNNING.md](RUNNING.md#capstone-running-it) for setup, Python/dependency pins, and environment variables. Store `GEMINI_API_KEY` privately in Render. Query embeddings run inside the service; peak Render RAM against the 512 MiB limit remains unmeasured.
 
-**Instrumentation**
+### Instrumentation
 
-`serve.py` now emits one JSON completion record to stdout for each `POST /ask`, including answers, refusals, validation failures, and handled exceptions. Records contain UTC timestamp, request ID, question, answer, corpus, configured model, cache setting, sources, best distance, threshold, refusal flag, HTTP status, server duration in milliseconds, and error type when applicable. The response's `X-Request-ID` matches the record. Exception messages and environment values are excluded from these records.
+Each `POST /ask` writes one JSON record to stdout. Read it in **Render → service → Logs**, searching for `rag_request`. Match the response's `X-Request-ID` to the log's `request_id`.
 
-Read the existing service's **Logs** page in Render and search for `rag_request`. Match the response's `X-Request-ID` to the JSON record's `request_id`; Render's `Rndr-Id` is a separate platform ID. See [Render's log guide](https://render.com/docs/logging).
+Records include timestamp, question, answer, model, sources, distance, refusal flag, HTTP status, duration, and error type. Environment values and exception messages are excluded. Answers use `app.py::ask_pipeline`; records come from `serve.py::finish_ask_log`.
 
-The user copied the real Render JSON message lines promptly, and they are now preserved in [server JSONL](results/hosted_cost_20261114T211124Z.render.jsonl). That file contains thirteen records: the initial invalid-input preflight, the excluded warm-up, ten measured requests, and the extra rejected request. Platform access and health-check lines were omitted from this JSONL because they are not application completion records. The [full client JSONL](results/hosted_cost_20261114T211124Z.jsonl) was flushed and synced after each request; the [summary](results/hosted_cost_20261114T211124Z.summary.json) contains both measured averages and provenance.
+The table extracts ten actual measured requests and one rejection from the saved Render logs. All used `campus_life`, `gemini-3.5-flash-lite`, and disabled response caching. IDs are shortened; [full server records](results/hosted_cost_20261114T211124Z.render.jsonl) and [client responses](results/hosted_cost_20261114T211124Z.jsonl) retain the details.
 
-All ten measured records were matched by request ID, HTTP status, question, answer, sources, refusal flag, distance, threshold, and corpus to the saved client responses. Each measured request has exactly one matching record in the supplied export. All show `cache_enabled: false` and configured model `gemini-3.5-flash-lite`. The non-string question (`{"question":123}`) produced a matching HTTP 400 `ValidationError` record, so a rejection was actually exercised and observed.
+| Run | Question | Result | HTTP | Server time (ms) | Request ID |
+| --- | --- | --- | --- | --- | --- |
+| 1 | Parking permits | August | 200 | 3425.701 | `8eb1d39a` |
+| 2 | Walking time | 18 minutes | 200 | 3079.784 | `c946f72b` |
+| 3 | PHYS 130 exams | Three midterms | 200 | 4058.572 | `06026626` |
+| 4 | Dining hours | 7:30am–7:00pm | 200 | 3776.169 | `044d92ef` |
+| 5 | Campus Wi-Fi | Student account | 200 | 3446.688 | `1ac4d206` |
+| 6 | Parking permits | August | 200 | 3105.508 | `aa05e3b6` |
+| 7 | Walking time | 18 minutes | 200 | 3342.495 | `df094b44` |
+| 8 | PHYS 130 exams | Three midterms | 200 | 3222.626 | `c79f1e48` |
+| 9 | Dining hours | 7:30am–7:00pm | 200 | 3907.116 | `0246bee7` |
+| 10 | Campus Wi-Fi | Student account | 200 | 5250.160 | `47bef557` |
+| Rejected | Non-string question | ValidationError | 400 | 0.216 | `20b828d9` |
 
-The following text is **ten actual server records plus that rejected run**, copied from the supplied Render export. The warm-up and initial preflight are archived but excluded here and from the average.
+### What It Costs
 
-```jsonl
-{"event": "rag_request", "timestamp": "2026-11-14T21:11:41.720496+00:00", "request_id": "8eb1d39a-9307-40ef-8ed0-2af31cc9031a", "question": "When can students purchase a parking permit?", "answer": "Student permits for the west lots go on sale in August (admin_parking_permits.txt).", "corpus": "campus_life", "model": "gemini-3.5-flash-lite", "cache_enabled": false, "sources": ["admin_library_holds.txt", "admin_parking_permits.txt", "advising_registration.txt", "study_library_hours.txt", "transit_shuttle.txt"], "best_distance": 0.4196, "threshold": 0.6, "refused": false, "http_status": 200, "duration_ms": 3425.701, "error_type": null}
-{"event": "rag_request", "timestamp": "2026-11-14T21:11:45.327706+00:00", "request_id": "c946f72b-00b8-40b9-aecb-3a88342052f9", "question": "How long does it take to walk from Fenwick Court to central campus?", "answer": "It takes about 18 minutes on foot to walk from Fenwick Court to central campus. \n\nSource: `transit_walking.txt` and `housing_fenwick_court.txt`", "corpus": "campus_life", "model": "gemini-3.5-flash-lite", "cache_enabled": false, "sources": ["housing_fenwick_court.txt", "housing_fenwick_court_noise.txt", "transit_shuttle.txt", "transit_walking.txt"], "best_distance": 0.2129, "threshold": 0.6, "refused": false, "http_status": 200, "duration_ms": 3079.784, "error_type": null}
-{"event": "rag_request", "timestamp": "2026-11-14T21:11:48.571175+00:00", "request_id": "06026626-4eb3-4ffe-b0bd-0f8aceaabad7", "question": "How many midterm exams are scheduled for PHYS 130 Mechanics?", "answer": "There are three midterms scheduled for PHYS 130 Mechanics. \n\nSource: `course_phys_130.txt` (and also found in `course_phys_130_exams.txt`)", "corpus": "campus_life", "model": "gemini-3.5-flash-lite", "cache_enabled": false, "sources": ["course_phys_130.txt", "course_phys_130_exams.txt", "course_phys_130_workload.txt"], "best_distance": 0.2583, "threshold": 0.6, "refused": false, "http_status": 200, "duration_ms": 4058.572, "error_type": null}
-{"event": "rag_request", "timestamp": "2026-11-14T21:11:52.782802+00:00", "request_id": "044d92ef-e7b0-4b25-96e6-8b4337a16c35", "question": "What are Halden Hall's weekday serving hours?", "answer": "Halden Hall's weekday hours are 7:30am to 7:00pm (source: dining_halden_hall.txt).", "corpus": "campus_life", "model": "gemini-3.5-flash-lite", "cache_enabled": false, "sources": ["dining_halden_hall.txt", "dining_halden_hall_followup.txt", "dining_the_atrium.txt"], "best_distance": 0.2064, "threshold": 0.6, "refused": false, "http_status": 200, "duration_ms": 3776.169, "error_type": null}
-{"event": "rag_request", "timestamp": "2026-11-14T21:11:56.754468+00:00", "request_id": "1ac4d206-31fd-4a63-a198-e11121e08085", "question": "What account do students need to access campus Wi-Fi?", "answer": "Students need a student account to access campus Wi-Fi (admin_wifi_and_accounts.txt).", "corpus": "campus_life", "model": "gemini-3.5-flash-lite", "cache_enabled": false, "sources": ["admin_wifi_and_accounts.txt", "money_jobs.txt", "money_textbooks.txt", "transit_shuttle.txt"], "best_distance": 0.3511, "threshold": 0.6, "refused": false, "http_status": 200, "duration_ms": 3446.688, "error_type": null}
-{"event": "rag_request", "timestamp": "2026-11-14T21:12:00.487185+00:00", "request_id": "aa05e3b6-63c7-42c8-a741-670cc6883b10", "question": "When can students purchase a parking permit?", "answer": "Student permits for the west lots go on sale in August (admin_parking_permits.txt).", "corpus": "campus_life", "model": "gemini-3.5-flash-lite", "cache_enabled": false, "sources": ["admin_library_holds.txt", "admin_parking_permits.txt", "advising_registration.txt", "study_library_hours.txt", "transit_shuttle.txt"], "best_distance": 0.4196, "threshold": 0.6, "refused": false, "http_status": 200, "duration_ms": 3105.508, "error_type": null}
-{"event": "rag_request", "timestamp": "2026-11-14T21:12:03.794177+00:00", "request_id": "df094b44-b6af-426e-ab77-9b1c9294199c", "question": "How long does it take to walk from Fenwick Court to central campus?", "answer": "It takes about 18 minutes on foot to walk from Fenwick Court to central campus. \n\nSource documents: `transit_walking.txt` and `housing_fenwick_court.txt`.", "corpus": "campus_life", "model": "gemini-3.5-flash-lite", "cache_enabled": false, "sources": ["housing_fenwick_court.txt", "housing_fenwick_court_noise.txt", "transit_shuttle.txt", "transit_walking.txt"], "best_distance": 0.2129, "threshold": 0.6, "refused": false, "http_status": 200, "duration_ms": 3342.495, "error_type": null}
-{"event": "rag_request", "timestamp": "2026-11-14T21:12:07.289142+00:00", "request_id": "c79f1e48-b463-4d77-b6b5-f58b59ae7c0e", "question": "How many midterm exams are scheduled for PHYS 130 Mechanics?", "answer": "There are three midterms scheduled for PHYS 130 Mechanics (source: `course_phys_130.txt` and `course_phys_130_exams.txt`).", "corpus": "campus_life", "model": "gemini-3.5-flash-lite", "cache_enabled": false, "sources": ["course_phys_130.txt", "course_phys_130_exams.txt", "course_phys_130_workload.txt"], "best_distance": 0.2583, "threshold": 0.6, "refused": false, "http_status": 200, "duration_ms": 3222.626, "error_type": null}
-{"event": "rag_request", "timestamp": "2026-11-14T21:12:10.646856+00:00", "request_id": "0246bee7-c1bd-4298-ac44-58eb118dce88", "question": "What are Halden Hall's weekday serving hours?", "answer": "Halden Hall's weekday hours are 7:30am to 7:00pm (source: dining_halden_hall.txt).", "corpus": "campus_life", "model": "gemini-3.5-flash-lite", "cache_enabled": false, "sources": ["dining_halden_hall.txt", "dining_halden_hall_followup.txt", "dining_the_atrium.txt"], "best_distance": 0.2064, "threshold": 0.6, "refused": false, "http_status": 200, "duration_ms": 3907.116, "error_type": null}
-{"event": "rag_request", "timestamp": "2026-11-14T21:12:14.702716+00:00", "request_id": "47bef557-14c8-49c4-8630-04229bf7111b", "question": "What account do students need to access campus Wi-Fi?", "answer": "Students need a student account to access campus Wi-Fi. \n\nSource: admin_wifi_and_accounts.txt", "corpus": "campus_life", "model": "gemini-3.5-flash-lite", "cache_enabled": false, "sources": ["admin_wifi_and_accounts.txt", "money_jobs.txt", "money_textbooks.txt", "transit_shuttle.txt"], "best_distance": 0.3511, "threshold": 0.6, "refused": false, "http_status": 200, "duration_ms": 5250.16, "error_type": null}
-{"event": "rag_request", "timestamp": "2026-11-14T21:12:20.097696+00:00", "request_id": "20b828d9-f7d9-46db-91a7-35cd29a11e0d", "question": null, "answer": null, "corpus": "campus_life", "model": "gemini-3.5-flash-lite", "cache_enabled": false, "sources": [], "best_distance": null, "threshold": 0.6, "refused": null, "http_status": 400, "duration_ms": 0.216, "error_type": "ValidationError"}
-```
+**Average client elapsed time: 3.695 seconds/request** over ten live requests. Total 36.954 seconds ÷ 10; all ten returned HTTP 200.
 
-**What It Costs**
+The five Project 1 questions were sent twice, sequentially, after one successful warm-up. Timing covered dispatch through the complete response, including network and server work. The warm-up (15.273 seconds) and rejected request were excluded. Response caching was disabled.
 
-**Measured average: 3.695436 seconds per hosted request** (3695.436 ms), based on ten actual sequential requests to `https://campus-life-rag.onrender.com/ask`. All ten returned HTTP 200. Total measured elapsed time was 36.954362995 seconds; `sum(elapsed_ns) / 10 / 1,000,000,000 = 3.6954362995 seconds/request`. Observed range: 3.140021–5.199396 seconds.
+Mean server handling time was **3.661 seconds/request**. Client and server clocks are separate; differences are documented in the [measurement summary](results/hosted_cost_20261114T211124Z.summary.json). API dollars and tokens were not measured.
 
-This measures **client-observed elapsed time**, not API dollars, tokens, CPU time, or the server-only `duration_ms` field. A monotonic nanosecond clock started immediately before Python urllib sent each request and stopped after reading the full response body. It includes DNS/TLS/network overhead, retrieval, API waits/retries, generation, and response transfer. Each urllib call could create a new connection; connection reuse was not assumed. The five existing Project 1 questions were sent twice in order, with no deliberate pause or automatic retries. Every one of the ten measured attempts is included; no outliers were discarded.
+### Run Log and Verdicts
 
-**Warm conditions:** one successful parking-permit warm-up took 15.273036223 seconds and is excluded from the ten-run average. It was followed immediately by the measured requests; this operationally warms the service/model but does not establish whether the warm-up itself was a cold start or guarantee that every provider connection stayed warm. Requests were recorded on November 14, 2026, with UTC timestamps in the saved JSONL. The extra invalid-input request (`{"question":123}`) returned HTTP 400 in 0.133399098 seconds and is also excluded from the average.
+Original targets were committed in `6f8923e` before testing. The unchanged deployed revision was user-confirmed as `1694a57`; its SHA is not exposed by the public API. Answer support was manually reviewed against tracked corpus text in the returned sources.
 
-The matching **server-side mean was 3.6614819 seconds/request** (3661.4819 ms): `sum(duration_ms) / 10 = 36614.819 / 10 = 3661.4819 ms`. This is the application's elapsed request-handling time from its monotonic timer, not CPU time or model-only inference time; it excludes client/network transfer and the log print itself. The server warm-up was 15640.101 ms and the invalid-input run was 0.216 ms, both excluded. Cache-disabled status is now verified in all ten measured server records, so they were not served by the application's response cache. Actual provider billing, token counts, API retries, and provider-side caching were not measured or inferred.
+| Criterion | Original target | Run 1 | Run 2 | Run 3 | Verdict |
+| --- | --- | --- | --- | --- | --- |
+| C1: answers and latency | At least 4/5 supported answers within 5 seconds on warm requests | 5/5 | 4/5 | 5/5 | MET |
+| C2: structured logs | All five questions produce exactly one complete JSON record each | 5/5 | 5/5 | 5/5 | MET |
+| C3: restart | After restart: `index_ready: true` and a correct sourced parking answer | Passed | Passed | Passed¹ | MET |
+| C4: invalid input | Non-string question: HTTP 400 + error log; next valid question succeeds | Passed | Passed | Passed | MET |
+| C5: refusals | At least 4/5 exact refusals, with `refused: true` in response and log | 5/5 | 5/5 | 5/5 | MET |
 
-Client and server durations are separate observations from independent clocks. In measured runs 9, 10, the supplied server duration is slightly larger than the corresponding client duration; the excluded warm-up also has this discrepancy. Its cause is unverified. Preserve both measured series and do not subtract them to estimate network overhead or treat them as interchangeable. The primary reported average remains the directly saved client elapsed-time measure above.
+Run 2's dining answer took **6.783 seconds** and remains a counted miss; the original 4/5 target was unchanged.
 
-No API-dollar or token estimate is reported. This cost sample does not score acceptance criteria or run the Milestone 5 formal trials.
+¹ The initial third-restart attempt returned HTTP 502 with uncertain restart timing. Its evidence is preserved. C3's final observation used a separate, explicitly confirmed restart; the recovery and protocol clarification are documented, not silently substituted.
 
-**Memory Check (512 MB limit)**
+[Final report and actual output](results/formal_test_01/final_report.md) · [Repeatable protocol](results/formal_test_01/protocol.md) · [Inputs](results/formal_test_01/inputs.json) · [Verdicts](results/formal_test_01/final_verdicts.json) · [All formal evidence](results/formal_test_01/)
 
-Query embeddings still run locally (`all-MiniLM-L6-v2` via ONNX), so I'll measure peak RAM during startup, indexing, and queries before claiming the service fits. One Gunicorn worker keeps memory down. If it exceeds 512 MB, I'll fix it within a hosted deployment.
+### Scope Limits
 
-**Out of Scope**
-
-- No changes to the corpus, chunking, embeddings, retrieval, gate, or prompt.
-- No frontend, accounts, or chat history; the JSON API is the interface.
-- No dashboard or new evaluation system; instrumentation is logging only.
+- Keep the existing corpus, chunking, embeddings, retrieval, gate, and prompt.
+- Use the JSON API; no custom frontend, accounts, or chat history.
+- Use structured logs; no analytics dashboard or new scoring system.

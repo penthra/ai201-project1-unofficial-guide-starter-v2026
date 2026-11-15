@@ -1,0 +1,45 @@
+{
+  "trial": 2,
+  "verdicts": {
+    "C1": "MET",
+    "C2": "MET",
+    "C3": "MET",
+    "C4": "MET",
+    "C5": "MET"
+  },
+  "C1": {
+    "supported_within_5_seconds": 4,
+    "total": 5,
+    "client_elapsed_seconds": [
+      4.804581461,
+      4.916785431,
+      4.425333995,
+      6.783053922,
+      3.955734336
+    ],
+    "slow_question_retained": "project_question_4",
+    "slow_elapsed_seconds": 6.783053922
+  },
+  "C2": {
+    "complete_single_logs": 5,
+    "total": 5
+  },
+  "C3": {
+    "user_confirmed_restart": true,
+    "index_ready": true,
+    "correct_sourced_parking_answer": true
+  },
+  "C4": {
+    "invalid_status": 400,
+    "error_log_type": "ValidationError",
+    "subsequent_valid_status": 200,
+    "subsequent_answer_supported": true
+  },
+  "C5": {
+    "exact_refusals_in_response_and_log": 5,
+    "total": 5
+  },
+  "all_13_post_records_matched": true,
+  "cache_enabled": false,
+  "qualification": "Restart and unchanged deployment revision remain user-attested; deployed SHA is not exposed by the public API."
+}

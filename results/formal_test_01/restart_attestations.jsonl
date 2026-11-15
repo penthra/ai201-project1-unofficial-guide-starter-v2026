@@ -1,0 +1,3 @@
+{"trial": 1, "recorded_at": "2026-11-15T02:48:39.775700+00:00", "restart_confirmed_by_user": true, "deployed_commit_user_attested": "1694a57b3e19cebdcb769480faf6480a491f92d9", "dashboard_startup_log_still_required": true}
+{"trial": 2, "recorded_at": "2026-11-15T03:00:54.689939+00:00", "restart_confirmed_by_user": true, "deployed_commit_user_attested": "1694a57b3e19cebdcb769480faf6480a491f92d9", "dashboard_startup_log_still_required": true}
+{"trial": 3, "recorded_at": "2026-11-15T03:07:01.039341+00:00", "restart_confirmed_by_user": true, "deployed_commit_user_attested": "1694a57b3e19cebdcb769480faf6480a491f92d9", "dashboard_startup_log_still_required": true}

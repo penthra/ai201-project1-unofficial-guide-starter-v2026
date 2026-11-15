@@ -1,0 +1,46 @@
+{
+  "trial": 3,
+  "phase": "separate_recovery_after_ambiguous_restart",
+  "verdicts": {
+    "C1": "MET",
+    "C2": "MET",
+    "C3": "INCONCLUSIVE",
+    "C4": "MET",
+    "C5": "MET"
+  },
+  "C1": {
+    "supported_within_5_seconds": 5,
+    "total": 5,
+    "client_elapsed_seconds": [
+      4.475453527,
+      4.456571887,
+      3.813972269,
+      4.01745124,
+      4.462383662
+    ]
+  },
+  "C2": {
+    "complete_single_logs": 5,
+    "total": 5
+  },
+  "C3": {
+    "initial_client_http_status": 502,
+    "original_restart_completion_uncertain": true,
+    "recovery_health_ready": true,
+    "recovery_correct_sourced_answer": true,
+    "status": "INCONCLUSIVE",
+    "reason": "No fair final restart verdict is assigned from uncertain initial eligibility or by silently substituting recovery success."
+  },
+  "C4": {
+    "invalid_status": 400,
+    "error_log_type": "ValidationError",
+    "subsequent_valid_status": 200,
+    "subsequent_answer_supported": true
+  },
+  "C5": {
+    "exact_refusals_in_response_and_log": 5,
+    "total": 5
+  },
+  "all_13_post_records_matched": true,
+  "cache_enabled": false
+}

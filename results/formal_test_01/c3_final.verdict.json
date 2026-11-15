@@ -1,0 +1,24 @@
+{
+  "criterion": "C3",
+  "status": "MET",
+  "scored_at_utc": "2026-11-15T03:20:42.051339+00:00",
+  "observation": "Third valid C3 trial, separately predeclared after ambiguous restart eligibility.",
+  "health_status": 200,
+  "index_ready": true,
+  "answer_status": 200,
+  "answer": "Student permits for the west lots go on sale in August, according to `admin_parking_permits.txt`.",
+  "sources": [
+    "admin_library_holds.txt",
+    "admin_parking_permits.txt",
+    "advising_registration.txt",
+    "study_library_hours.txt",
+    "transit_shuttle.txt"
+  ],
+  "request_id": "52eb80d0-3e8f-4385-aeaa-9341e5fb9858",
+  "client_elapsed_seconds": 3.733064269,
+  "latency_is_not_a_C3_target": true,
+  "restart_completion_and_Live_status_explicitly_user_confirmed": true,
+  "deployed_revision_provenance": "User-attested unchanged latest 1694a57, not exposed by API.",
+  "earlier_502_and_uncertain_restart_preserved": true,
+  "no_retry_of_this_final_observation": true
+}

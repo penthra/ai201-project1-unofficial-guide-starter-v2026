@@ -1,0 +1,126 @@
+{
+  "trial": 2,
+  "formal_client_requests_completed": true,
+  "client_record_count": 14,
+  "warmup_request_id": "0817867a-9d6a-46a3-a6dd-506a73b7d455",
+  "warmup_elapsed_seconds": 15.252834603,
+  "warmup_excluded_from_C1": true,
+  "C1_question_reviews": [
+    {
+      "step": "project_question_1",
+      "request_id": "6fc196e9-242a-4dcb-9737-e83d6d5b4157",
+      "answer_reviewed": "Student permits for the west lots go on sale in August (admin_parking_permits.txt).",
+      "manual_factual_support": true,
+      "review_reason": "The answer says west-lot student permits go on sale in August; this is stated in the cited source.",
+      "source_file": "corpora/campus_life/documents/admin_parking_permits.txt",
+      "source_excerpt": "Student permits for the west lots go on sale in August and sell out in about three days.",
+      "elapsed_seconds": 4.804581461,
+      "within_original_5_seconds": true,
+      "http_status": 200,
+      "verdict_provisional_until_cache_export": false
+    },
+    {
+      "step": "project_question_2",
+      "request_id": "5ba2428f-1785-40d7-8c5a-c62018932334",
+      "answer_reviewed": "It takes about 18 minutes to walk from Fenwick Court to central campus (transit_walking.txt, housing_fenwick_court.txt).",
+      "manual_factual_support": true,
+      "review_reason": "The answer says about 18 minutes on foot; transit_walking.txt and housing_fenwick_court.txt both support that claim.",
+      "source_file": "corpora/campus_life/documents/transit_walking.txt",
+      "source_excerpt": "Fenwick Court to central campus: 18 minutes.",
+      "elapsed_seconds": 4.916785431,
+      "within_original_5_seconds": true,
+      "http_status": 200,
+      "verdict_provisional_until_cache_export": false
+    },
+    {
+      "step": "project_question_3",
+      "request_id": "231e265e-704f-4f06-92d9-bee2d2f619ba",
+      "answer_reviewed": "There are three midterms scheduled for PHYS 130 Mechanics. \n\nSource: `course_phys_130.txt` (and also found in `course_phys_130_exams.txt`).",
+      "manual_factual_support": true,
+      "review_reason": "The answer says three midterms; both cited PHYS 130 documents state this. No additional unsupported claim is made.",
+      "source_file": "corpora/campus_life/documents/course_phys_130_exams.txt",
+      "source_excerpt": "Three midterms, no final, plus a lab practical.",
+      "elapsed_seconds": 4.425333995,
+      "within_original_5_seconds": true,
+      "http_status": 200,
+      "verdict_provisional_until_cache_export": false
+    },
+    {
+      "step": "project_question_4",
+      "request_id": "a8634388-8fca-4ee3-a05d-fa36705c36b1",
+      "answer_reviewed": "Halden Hall's weekday hours are 7:30am to 7:00pm (dining_halden_hall.txt).",
+      "manual_factual_support": true,
+      "review_reason": "The answer gives the stated weekday hours of 7:30am to 7:00pm.",
+      "source_file": "corpora/campus_life/documents/dining_halden_hall.txt",
+      "source_excerpt": "Hours are 7:30am to 7:00pm weekdays, closed Sundays.",
+      "elapsed_seconds": 6.783053922,
+      "within_original_5_seconds": false,
+      "http_status": 200,
+      "verdict_provisional_until_cache_export": false
+    },
+    {
+      "step": "project_question_5",
+      "request_id": "58f32567-5cb3-4d12-8ee0-57a57f651e41",
+      "answer_reviewed": "Students need a student account to access campus Wi-Fi (source: admin_wifi_and_accounts.txt).",
+      "manual_factual_support": true,
+      "review_reason": "The answer says a student account is needed for campus Wi-Fi; the cited source supports this.",
+      "source_file": "corpora/campus_life/documents/admin_wifi_and_accounts.txt",
+      "source_excerpt": "Your student account gives you campus wifi, printing, and a cloud drive with unlimited storage that most people never discover.",
+      "elapsed_seconds": 3.955734336,
+      "within_original_5_seconds": true,
+      "http_status": 200,
+      "verdict_provisional_until_cache_export": false
+    }
+  ],
+  "C1_supported_and_within_time_observed": 4,
+  "C1_original_target_reached_on_client_observations": true,
+  "C2": {
+    "status": "MET",
+    "request_ids": [
+      "6fc196e9-242a-4dcb-9737-e83d6d5b4157",
+      "5ba2428f-1785-40d7-8c5a-c62018932334",
+      "231e265e-704f-4f06-92d9-bee2d2f619ba",
+      "a8634388-8fca-4ee3-a05d-fa36705c36b1",
+      "58f32567-5cb3-4d12-8ee0-57a57f651e41"
+    ],
+    "verified_complete_project_logs": 5,
+    "missing_project_log_count": 0
+  },
+  "C3": {
+    "restart_user_confirmed": true,
+    "index_ready": true,
+    "parking_answer_correct_and_sourced_observed": true,
+    "independent_dashboard_startup_transcript_supplied": false,
+    "status": "MET",
+    "restart_evidence_source": "User explicitly confirmed the separate Trial 2 restart complete before requests."
+  },
+  "C4": {
+    "invalid_http_status": 400,
+    "subsequent_valid_http_status": 200,
+    "subsequent_valid_answer_supported": true,
+    "error_log_pending": false,
+    "status": "MET",
+    "error_type": "ValidationError"
+  },
+  "C5": {
+    "correct_refusals_in_responses": 5,
+    "response_count": 5,
+    "refused_true_in_logs_pending": false,
+    "status": "MET",
+    "correct_refusals_with_matching_log": 5
+  },
+  "cache_configuration_pending_server_export": false,
+  "deployed_commit_verification": "user-attested latest; public API does not expose SHA",
+  "application_changes_made": false,
+  "server_export_provenance": "User-updated log.txt archived verbatim in trial_2.render_export.txt; matching application JSON lines preserved in trial_2.render.jsonl.",
+  "server_records_received": 13,
+  "cache_disabled_verified_for_all_trial_2_posts": true,
+  "criterion_verdicts": {
+    "C1": "MET",
+    "C2": "MET",
+    "C3": "MET",
+    "C4": "MET",
+    "C5": "MET"
+  },
+  "scored_at_utc": "2026-11-15T03:06:09.871602+00:00"
+}

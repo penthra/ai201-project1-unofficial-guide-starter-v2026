@@ -340,3 +340,23 @@ existing local environment; the deployed runtime remains pinned to Python
 3.13.7. The earlier clean-checkout build used that pinned version. Changes
 from this audit are the new local check script and updated documentation;
 there is no production-code change to redeploy from this audit.
+
+
+## First formal test completed
+
+See README's **Run Log and Verdicts** and
+[results/formal_test_01/final_report.md](results/formal_test_01/final_report.md).
+The original criteria commit `6f8923e` predates the runs. Application/criteria
+hashes remained frozen at user-attested deployed revision `1694a57`.
+All five criteria are MET across three valid observations each; C1 achieved
+5/5, 4/5, 5/5 within the original time/support target. Complete actual client
+responses, commands, source reviews, and exported server JSON are saved.
+
+The ambiguous original third-restart HTTP 502 is retained. A user-corrected
+restart-completion assumption led to a separate recovery and a predeclared,
+explicitly confirmed C3-only completion check. The final report describes this
+protocol clarification, source-file review limitation, and user-attested
+version/restart provenance. No failure was silently replaced. Retest inputs
+and method are preserved in results/formal_test_01/protocol.md and inputs.json;
+use a new evidence directory for any later changed version. No application
+code or deployment changes were made, and no fixes/retest were started.

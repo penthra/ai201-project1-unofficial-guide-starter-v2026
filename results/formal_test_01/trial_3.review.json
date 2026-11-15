@@ -1,0 +1,37 @@
+{
+  "trial": 3,
+  "client_requests_completed": 2,
+  "health_ready": true,
+  "restart_user_confirmed": true,
+  "restart_answer_http_status": 502,
+  "restart_answer_elapsed_seconds": 1.476675068,
+  "application_request_id": null,
+  "render_request_id": "7079d3e9-8a1d-4fbb",
+  "error_response_title": "502",
+  "error_response_html": "trial_3.restart_answer_502.html",
+  "error_response_sha256": "48b19a564e380c764cc12b1698464f675a3f07033e6e84fe301eb05b3f3bfde5",
+  "C3": {
+    "status": "MISSED",
+    "reason": "After the user-confirmed restart, health returned index_ready:true, but the parking question returned HTTP 502 rather than a correct sourced answer."
+  },
+  "C1": {
+    "status": "NOT_RUN",
+    "reason": "Successful warm-up not established; protocol stopped."
+  },
+  "C2": {
+    "status": "NOT_RUN",
+    "reason": "Five Project 1 requests were not sent."
+  },
+  "C4": {
+    "status": "NOT_RUN",
+    "reason": "Protocol stopped before invalid-input/recovery pair."
+  },
+  "C5": {
+    "status": "NOT_RUN",
+    "reason": "Protocol stopped before out-of-scope requests."
+  },
+  "no_retry_performed": true,
+  "no_application_change": true,
+  "recovery_requires_user_protocol_clarification": true,
+  "deployed_version_provenance": "User-attested unchanged latest 1694a57; not independently exposed by API."
+}

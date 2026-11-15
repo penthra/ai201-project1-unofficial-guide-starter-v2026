@@ -1,0 +1,62 @@
+{
+  "completed_at_utc": "2026-11-15T03:20:42.051339+00:00",
+  "repository_revision": "1694a57b3e19cebdcb769480faf6480a491f92d9",
+  "deployment_revision_user_attested": "1694a57b3e19cebdcb769480faf6480a491f92d9",
+  "independent_deployed_revision_verification": false,
+  "criteria_commit": "6f8923ecf1939529f5fd7daf0abdc05eed0b86f4",
+  "criteria_committed_before_all_formal_requests": true,
+  "original_targets_unchanged": true,
+  "overall_verdicts": {
+    "C1": "MET",
+    "C2": "MET",
+    "C3": "MET",
+    "C4": "MET",
+    "C5": "MET"
+  },
+  "per_criterion_valid_trials": {
+    "C1": [
+      "MET 5/5",
+      "MET 4/5",
+      "MET 5/5"
+    ],
+    "C2": [
+      "MET 5/5",
+      "MET 5/5",
+      "MET 5/5"
+    ],
+    "C3": [
+      "MET (Trial 1)",
+      "MET (Trial 2)",
+      "MET (separate confirmed C3 final check)"
+    ],
+    "C4": [
+      "MET",
+      "MET",
+      "MET"
+    ],
+    "C5": [
+      "MET 5/5",
+      "MET 5/5",
+      "MET 5/5"
+    ]
+  },
+  "C1_timed_question_counts": [
+    5,
+    4,
+    5
+  ],
+  "C1_total_supported_answers": 15,
+  "C1_total_answers_within_5_seconds": 14,
+  "C2_single_complete_records_checked": 15,
+  "C4_invalid_then_valid_sequences_checked": 3,
+  "C5_exact_refusals_with_matching_logs_checked": 15,
+  "response_cache_disabled_in_all_39_exported_batch_records": true,
+  "restart_provenance": "User confirmations; final C3 confirmation explicitly checked finished restart + Render Live. Independent dashboard transcript not supplied.",
+  "source_review_method": "User-approved manual factual review against tracked corpus text in returned source files; actual chunk bodies are not exposed by live API.",
+  "C3_eligibility_exception": "Initial third-restart HTTP 502 retained. User could not confirm completion timing, so observation inconclusive. Separately logged recovery and one predeclared, freshly confirmed C3-only check performed; no timed C1 question was retried.",
+  "initial_http_502_preserved": true,
+  "application_code_changed": false,
+  "deployment_settings_changed": false,
+  "Git_staging_commits_pushes_performed": false,
+  "stop_before_fixes": true
+}

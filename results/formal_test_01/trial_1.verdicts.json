@@ -1,0 +1,44 @@
+{
+  "trial": 1,
+  "verdicts": {
+    "C1": "MET",
+    "C2": "MET",
+    "C3": "MET",
+    "C4": "MET",
+    "C5": "MET"
+  },
+  "C1": {
+    "supported_within_5_seconds": 5,
+    "total": 5,
+    "client_elapsed_seconds": [
+      3.827942508,
+      3.423628606,
+      4.133164484,
+      3.211268463,
+      3.561190799
+    ]
+  },
+  "C2": {
+    "complete_single_logs": 5,
+    "total": 5
+  },
+  "C3": {
+    "user_confirmed_restart": true,
+    "index_ready": true,
+    "correct_sourced_parking_answer": true
+  },
+  "C4": {
+    "invalid_status": 400,
+    "error_log_type": "ValidationError",
+    "subsequent_valid_status": 200,
+    "subsequent_answer_supported": true
+  },
+  "C5": {
+    "exact_refusals_in_response_and_log": 5,
+    "total": 5
+  },
+  "all_13_post_records_matched": true,
+  "cache_enabled": false,
+  "later_trials_started": false,
+  "qualification": "Restart and deployed SHA are user-attested; there is no independent public API SHA or supplied dashboard startup transcript. Source-file factual review method was approved by the user before runs."
+}

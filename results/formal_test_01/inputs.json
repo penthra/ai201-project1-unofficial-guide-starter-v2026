@@ -1,0 +1,37 @@
+{
+  "url": "https://campus-life-rag.onrender.com",
+  "in_corpus": [
+    {
+      "question": "When can students purchase a parking permit?",
+      "expects": "August"
+    },
+    {
+      "question": "How long does it take to walk from Fenwick Court to central campus?",
+      "expects": "18 minutes"
+    },
+    {
+      "question": "How many midterm exams are scheduled for PHYS 130 Mechanics?",
+      "expects": "Three midterms"
+    },
+    {
+      "question": "What are Halden Hall's weekday serving hours?",
+      "expects": "7:30am to 7:00pm"
+    },
+    {
+      "question": "What account do students need to access campus Wi-Fi?",
+      "expects": "student account"
+    }
+  ],
+  "out_of_scope": [
+    "What is the capital of Mongolia?",
+    "How do I change the oil in a diesel engine?",
+    "Who won the 1994 World Cup?",
+    "What is the recommended dosage of ibuprofen for a headache?",
+    "How do I write a for loop in Rust?"
+  ],
+  "invalid_payload": {
+    "question": 123
+  },
+  "restart_question": "When can students purchase a parking permit?",
+  "recovery_question": "When can students purchase a parking permit?"
+}

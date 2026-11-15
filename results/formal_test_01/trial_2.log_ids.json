@@ -1,0 +1,67 @@
+[
+  {
+    "step": "restart_answer_and_excluded_warmup",
+    "request_id": "0817867a-9d6a-46a3-a6dd-506a73b7d455",
+    "timestamp_utc": "2026-11-15T03:00:54.998212+00:00"
+  },
+  {
+    "step": "project_question_1",
+    "request_id": "6fc196e9-242a-4dcb-9737-e83d6d5b4157",
+    "timestamp_utc": "2026-11-15T03:01:10.293127+00:00"
+  },
+  {
+    "step": "project_question_2",
+    "request_id": "5ba2428f-1785-40d7-8c5a-c62018932334",
+    "timestamp_utc": "2026-11-15T03:01:15.958050+00:00"
+  },
+  {
+    "step": "project_question_3",
+    "request_id": "231e265e-704f-4f06-92d9-bee2d2f619ba",
+    "timestamp_utc": "2026-11-15T03:01:21.995703+00:00"
+  },
+  {
+    "step": "project_question_4",
+    "request_id": "a8634388-8fca-4ee3-a05d-fa36705c36b1",
+    "timestamp_utc": "2026-11-15T03:01:26.538320+00:00"
+  },
+  {
+    "step": "project_question_5",
+    "request_id": "58f32567-5cb3-4d12-8ee0-57a57f651e41",
+    "timestamp_utc": "2026-11-15T03:01:33.356489+00:00"
+  },
+  {
+    "step": "invalid_non_string",
+    "request_id": "c984772e-c629-46b6-9c19-e99feafd3b5c",
+    "timestamp_utc": "2026-11-15T03:01:37.345831+00:00"
+  },
+  {
+    "step": "valid_after_invalid",
+    "request_id": "3a11e1b9-2734-4a6c-aef8-494e58e492e8",
+    "timestamp_utc": "2026-11-15T03:01:37.508961+00:00"
+  },
+  {
+    "step": "out_of_scope_1",
+    "request_id": "3daf785d-b1af-43c0-9f25-260d3ef920a8",
+    "timestamp_utc": "2026-11-15T03:01:41.360886+00:00"
+  },
+  {
+    "step": "out_of_scope_2",
+    "request_id": "0e561b1c-56f7-4718-9c05-5844658bf668",
+    "timestamp_utc": "2026-11-15T03:01:44.086703+00:00"
+  },
+  {
+    "step": "out_of_scope_3",
+    "request_id": "97ab2172-8037-4956-ae77-015773876570",
+    "timestamp_utc": "2026-11-15T03:01:50.148218+00:00"
+  },
+  {
+    "step": "out_of_scope_4",
+    "request_id": "322604aa-6230-41ba-83ef-bc751685d3ec",
+    "timestamp_utc": "2026-11-15T03:01:55.248316+00:00"
+  },
+  {
+    "step": "out_of_scope_5",
+    "request_id": "0778f850-652d-42bf-8ed5-c03d6248c4c9",
+    "timestamp_utc": "2026-11-15T03:01:58.804344+00:00"
+  }
+]

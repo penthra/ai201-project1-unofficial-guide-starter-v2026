@@ -262,3 +262,81 @@ and the extra failed/rejected record described under **What It Costs** and
 them as text into the README. Do not count a warm-up or the extra invalid-input
 request in the ten-run average, and do not substitute local test records for
 actual deployed logs. Formal acceptance trials remain for Milestone 5.
+
+
+### Live cost measurement and log export — November 14, 2026
+
+The new request-ID behavior is live. Ten sequential measured requests after
+one excluded successful warm-up all returned HTTP 200. Mean client-observed
+elapsed time was **3.695436 seconds/request**. The matching server log mean
+was **3.6614819 seconds/request** (3661.4819 ms), measured by the handler.
+Neither metric measures API spend or tokens.
+
+Each client's full response and timing was synced to
+[client JSONL](results/hosted_cost_20261114T211124Z.jsonl) immediately.
+The user then supplied actual `rag_request` messages from Render's private
+Logs page. Those thirteen messages are preserved in
+[server JSONL](results/hosted_cost_20261114T211124Z.render.jsonl), including
+an initial rejected preflight, the warm-up, ten measured requests, and the
+extra invalid-input request. All ten measured responses match the server
+records by ID and response fields. Cache-disabled status is verified in all
+ten; their configured model is `gemini-3.5-flash-lite`. The extra rejection
+returned HTTP 400 and logged `ValidationError`.
+
+README's **Instrumentation** now pastes the ten actual server records plus
+the rejection as JSONL text. **What It Costs** describes units, calculation,
+warm conditions, and exclusions. The [summary](results/hosted_cost_20261114T211124Z.summary.json)
+retains both averages. Two measured server durations and the warm-up exceed
+the corresponding client durations; the timing discrepancy is unexplained.
+The two clock series must not be subtracted to derive network overhead.
+
+No requests were repeated to recover server evidence. The service was left
+in place, and no deploy or Git write action was performed. Formal acceptance
+trials remain for Milestone 5. Current hosted revision, peak RAM, API spend,
+and token counts remain outside what this measurement establishes.
+
+
+## Capstone criteria: implementation coverage
+
+The five approved criteria in `criteria.md` have implementation support.
+This audit checks readiness to verify them; it does not declare that they
+passed formal acceptance trials or guarantee the latency target.
+
+| Criterion | Existing implementation | What remains to verify live |
+| --- | --- | --- |
+| C1: supported answers within five seconds on warm requests | `serve.ask` calls the original `app.ask_pipeline`; `generate.build_prompt` supplies retrieved text, and the grounding instruction requires supported answers. The HTTP response and log expose sources, distance, and outcome; the log has `duration_ms`. | Warm the service first, then time the five Project 1 questions and review factual support using the retrieved material. Use client elapsed time for the user-visible limit, not the server timer. Model quality and a five-second limit cannot be guaranteed by a code check. |
+| C2: exactly one complete JSON log per request | `start_ask_log` and `finish_ask_log` wrap each `POST /ask`. Each completed request prints one JSON record with all required fields and a matching `X-Request-ID`. | Match the five actual responses to the exported Render JSON lines and check one record per ID. The existing cost evidence already demonstrates this logging path, but it is not formal scoring. |
+| C3: readiness and a sourced answer after restart | `build.sh` packages the real index and model assets; `start.sh` reuses those artifacts and starts one worker. `/health` checks the selected Chroma collection through `store.index_exists`. | Perform the approved restart of the existing Render service, then check `index_ready: true` and ask the parking question. No actual Render restart was performed during this audit. |
+| C4: rejected non-string input, then continued service | `serve.ask` rejects non-string questions before invoking the pipeline; the after-request hook logs HTTP 400 with `ValidationError`. Request-local Flask `g` state prevents one error from contaminating the next request. | Verify a non-string request and its error record, followed by a successful real question. Local checks cover this sequence with controlled retrieval/generation. |
+| C5: refusals appear in response and log | `gate.check` rejects distances at/above the threshold or empty results. `ask_pipeline` returns the exact `gate.REFUSAL` and skips generation; the response and completion log copy the refusal flag. | Use the five existing `OUT_OF_SCOPE` questions against the real index and compare the response and log. Controlled local distances cannot establish real embedding quality for those questions. |
+
+No production implementation gap was found in this audit, so no RAG behavior,
+model, retrieval parameter, start command, or live service was changed just to
+make a check pass. In particular, forcing a short timeout would not guarantee
+a supported answer within the C1 limit. Actual acceptance verdicts belong to
+the later formal trials.
+
+### Repeatable local implementation checks
+
+After installing the project dependencies in the selected Python environment:
+
+```bash
+python -m unittest discover -s tests -p 'test_capstone_contracts.py' -v
+```
+
+The eight checks in `tests/test_capstone_contracts.py` passed during this
+audit. They exercise the real HTTP handler, original pipeline, gate, and prompt
+builder, using controlled stand-ins only for retrieval and answer generation.
+They check a supported-answer path, one complete log, input rejection followed
+by recovery, refusal with no generation call, empty retrieval, handled errors,
+health flags, and startup-script artifact/port handling. The startup checks use
+a stand-in executable and a placeholder index file: they check shell wiring,
+not actual SQLite persistence or a restart of Render. These checks make no
+network/API calls, download no models, require no secret values, and do not
+score the five acceptance criteria.
+
+The audit ran with host Python 3.12.3 and Flask dependencies available from the
+existing local environment; the deployed runtime remains pinned to Python
+3.13.7. The earlier clean-checkout build used that pinned version. Changes
+from this audit are the new local check script and updated documentation;
+there is no production-code change to redeploy from this audit.

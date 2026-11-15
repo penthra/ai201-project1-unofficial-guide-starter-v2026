@@ -334,7 +334,7 @@ Scope: keep the existing RAG behavior; use the JSON API without a custom fronten
 | Health | `GET /health`; check `index_ready: true` |
 | Ask | `POST /ask` with `{"question":"When can students purchase a parking permit?"}` |
 
-See [RUNNING.md](RUNNING.md#capstone-running-it) for the working live request, Render configuration, tested local setup, and verification limits. Store `GEMINI_API_KEY` privately in Render. Query embeddings run inside the service; peak Render RAM against the 512 MiB limit remains unmeasured.
+See [RUNNING.md](RUNNING.md#capstone-running-it) for the working live request, Render configuration, tested local setup, and verification limits. Store `GEMINI_API_KEY` privately in Render. Query embeddings run inside the service;
 
 **Instrumentation**
 
@@ -358,6 +358,28 @@ The table extracts ten actual measured requests and one rejection from the saved
 | 10 | Campus Wi-Fi | Student account | 200 | 5250.160 | `47bef557` |
 | Rejected | Non-string question | ValidationError | 400 | 0.216 | `20b828d9` |
 
+<details>
+<summary>Actual structured log records: ten measured requests and one rejection</summary>
+
+The following JSON lines are copied from the saved Render export. The warm-up
+and initial preflight are excluded. Full client measurements remain linked above.
+
+```jsonl
+{"event": "rag_request", "timestamp": "2026-11-14T21:11:41.720496+00:00", "request_id": "8eb1d39a-9307-40ef-8ed0-2af31cc9031a", "question": "When can students purchase a parking permit?", "answer": "Student permits for the west lots go on sale in August (admin_parking_permits.txt).", "corpus": "campus_life", "model": "gemini-3.5-flash-lite", "cache_enabled": false, "sources": ["admin_library_holds.txt", "admin_parking_permits.txt", "advising_registration.txt", "study_library_hours.txt", "transit_shuttle.txt"], "best_distance": 0.4196, "threshold": 0.6, "refused": false, "http_status": 200, "duration_ms": 3425.701, "error_type": null}
+{"event": "rag_request", "timestamp": "2026-11-14T21:11:45.327706+00:00", "request_id": "c946f72b-00b8-40b9-aecb-3a88342052f9", "question": "How long does it take to walk from Fenwick Court to central campus?", "answer": "It takes about 18 minutes on foot to walk from Fenwick Court to central campus. \n\nSource: `transit_walking.txt` and `housing_fenwick_court.txt`", "corpus": "campus_life", "model": "gemini-3.5-flash-lite", "cache_enabled": false, "sources": ["housing_fenwick_court.txt", "housing_fenwick_court_noise.txt", "transit_shuttle.txt", "transit_walking.txt"], "best_distance": 0.2129, "threshold": 0.6, "refused": false, "http_status": 200, "duration_ms": 3079.784, "error_type": null}
+{"event": "rag_request", "timestamp": "2026-11-14T21:11:48.571175+00:00", "request_id": "06026626-4eb3-4ffe-b0bd-0f8aceaabad7", "question": "How many midterm exams are scheduled for PHYS 130 Mechanics?", "answer": "There are three midterms scheduled for PHYS 130 Mechanics. \n\nSource: `course_phys_130.txt` (and also found in `course_phys_130_exams.txt`)", "corpus": "campus_life", "model": "gemini-3.5-flash-lite", "cache_enabled": false, "sources": ["course_phys_130.txt", "course_phys_130_exams.txt", "course_phys_130_workload.txt"], "best_distance": 0.2583, "threshold": 0.6, "refused": false, "http_status": 200, "duration_ms": 4058.572, "error_type": null}
+{"event": "rag_request", "timestamp": "2026-11-14T21:11:52.782802+00:00", "request_id": "044d92ef-e7b0-4b25-96e6-8b4337a16c35", "question": "What are Halden Hall's weekday serving hours?", "answer": "Halden Hall's weekday hours are 7:30am to 7:00pm (source: dining_halden_hall.txt).", "corpus": "campus_life", "model": "gemini-3.5-flash-lite", "cache_enabled": false, "sources": ["dining_halden_hall.txt", "dining_halden_hall_followup.txt", "dining_the_atrium.txt"], "best_distance": 0.2064, "threshold": 0.6, "refused": false, "http_status": 200, "duration_ms": 3776.169, "error_type": null}
+{"event": "rag_request", "timestamp": "2026-11-14T21:11:56.754468+00:00", "request_id": "1ac4d206-31fd-4a63-a198-e11121e08085", "question": "What account do students need to access campus Wi-Fi?", "answer": "Students need a student account to access campus Wi-Fi (admin_wifi_and_accounts.txt).", "corpus": "campus_life", "model": "gemini-3.5-flash-lite", "cache_enabled": false, "sources": ["admin_wifi_and_accounts.txt", "money_jobs.txt", "money_textbooks.txt", "transit_shuttle.txt"], "best_distance": 0.3511, "threshold": 0.6, "refused": false, "http_status": 200, "duration_ms": 3446.688, "error_type": null}
+{"event": "rag_request", "timestamp": "2026-11-14T21:12:00.487185+00:00", "request_id": "aa05e3b6-63c7-42c8-a741-670cc6883b10", "question": "When can students purchase a parking permit?", "answer": "Student permits for the west lots go on sale in August (admin_parking_permits.txt).", "corpus": "campus_life", "model": "gemini-3.5-flash-lite", "cache_enabled": false, "sources": ["admin_library_holds.txt", "admin_parking_permits.txt", "advising_registration.txt", "study_library_hours.txt", "transit_shuttle.txt"], "best_distance": 0.4196, "threshold": 0.6, "refused": false, "http_status": 200, "duration_ms": 3105.508, "error_type": null}
+{"event": "rag_request", "timestamp": "2026-11-14T21:12:03.794177+00:00", "request_id": "df094b44-b6af-426e-ab77-9b1c9294199c", "question": "How long does it take to walk from Fenwick Court to central campus?", "answer": "It takes about 18 minutes on foot to walk from Fenwick Court to central campus. \n\nSource documents: `transit_walking.txt` and `housing_fenwick_court.txt`.", "corpus": "campus_life", "model": "gemini-3.5-flash-lite", "cache_enabled": false, "sources": ["housing_fenwick_court.txt", "housing_fenwick_court_noise.txt", "transit_shuttle.txt", "transit_walking.txt"], "best_distance": 0.2129, "threshold": 0.6, "refused": false, "http_status": 200, "duration_ms": 3342.495, "error_type": null}
+{"event": "rag_request", "timestamp": "2026-11-14T21:12:07.289142+00:00", "request_id": "c79f1e48-b463-4d77-b6b5-f58b59ae7c0e", "question": "How many midterm exams are scheduled for PHYS 130 Mechanics?", "answer": "There are three midterms scheduled for PHYS 130 Mechanics (source: `course_phys_130.txt` and `course_phys_130_exams.txt`).", "corpus": "campus_life", "model": "gemini-3.5-flash-lite", "cache_enabled": false, "sources": ["course_phys_130.txt", "course_phys_130_exams.txt", "course_phys_130_workload.txt"], "best_distance": 0.2583, "threshold": 0.6, "refused": false, "http_status": 200, "duration_ms": 3222.626, "error_type": null}
+{"event": "rag_request", "timestamp": "2026-11-14T21:12:10.646856+00:00", "request_id": "0246bee7-c1bd-4298-ac44-58eb118dce88", "question": "What are Halden Hall's weekday serving hours?", "answer": "Halden Hall's weekday hours are 7:30am to 7:00pm (source: dining_halden_hall.txt).", "corpus": "campus_life", "model": "gemini-3.5-flash-lite", "cache_enabled": false, "sources": ["dining_halden_hall.txt", "dining_halden_hall_followup.txt", "dining_the_atrium.txt"], "best_distance": 0.2064, "threshold": 0.6, "refused": false, "http_status": 200, "duration_ms": 3907.116, "error_type": null}
+{"event": "rag_request", "timestamp": "2026-11-14T21:12:14.702716+00:00", "request_id": "47bef557-14c8-49c4-8630-04229bf7111b", "question": "What account do students need to access campus Wi-Fi?", "answer": "Students need a student account to access campus Wi-Fi. \n\nSource: admin_wifi_and_accounts.txt", "corpus": "campus_life", "model": "gemini-3.5-flash-lite", "cache_enabled": false, "sources": ["admin_wifi_and_accounts.txt", "money_jobs.txt", "money_textbooks.txt", "transit_shuttle.txt"], "best_distance": 0.3511, "threshold": 0.6, "refused": false, "http_status": 200, "duration_ms": 5250.16, "error_type": null}
+{"event": "rag_request", "timestamp": "2026-11-14T21:12:20.097696+00:00", "request_id": "20b828d9-f7d9-46db-91a7-35cd29a11e0d", "question": null, "answer": null, "corpus": "campus_life", "model": "gemini-3.5-flash-lite", "cache_enabled": false, "sources": [], "best_distance": null, "threshold": 0.6, "refused": null, "http_status": 400, "duration_ms": 0.216, "error_type": "ValidationError"}
+```
+
+</details>
+
 **What It Costs**
 
 Measured ten uncached warm requests: **3.695436 seconds/run** average client elapsed time. Arithmetic: `36.954362995 seconds ÷ 10 runs = 3.6954362995 seconds/run`.
@@ -373,7 +395,18 @@ This is projected aggregate request elapsed time under similar warm, sequential 
 
 **Run Log and Verdicts**
 
-Original targets were committed in `6f8923e` before testing. The unchanged deployed revision was user-confirmed as `1694a57`; its SHA is not exposed by the public API. Answer support was manually reviewed against tracked corpus text in the returned sources.
+Original targets were committed in `6f8923e` before testing. The unchanged deployed revision was user-confirmed as `1694a57b3e19cebdcb769480faf6480a491f92d9`; the owner also confirmed matching repository deployment settings. These are owner confirmations; the public API does not expose them. Answer support was manually reviewed against tracked corpus text in the returned sources.
+
+Commit evidence (roles named explicitly without rewriting history):
+
+| Commit | Role | Original commit message |
+| --- | --- | --- |
+| `6f8923e` | Original capstone criteria | `criterion` |
+| `97d99ee` | First saved structured request observations | `milestone3` |
+| `1694a57` | First cost measurements | `milestone4` |
+| `7844e56` | First formal baseline results | `milestone5` |
+
+Criteria commit `6f8923e` is an ancestor of first formal-results commit `7844e56`; both the file contents and commit order were checked.
 
 | Criterion | Original target | Run 1 | Run 2 | Run 3 | Verdict |
 | --- | --- | --- | --- | --- | --- |
@@ -403,7 +436,7 @@ All five original criteria passed, but these limitations remain:
 | --- | --- |
 | One warm answer took 6.783 seconds, exceeding the per-question limit | Add stage timings; then optimize the measured slow stage, such as retrieval/client reuse or generation length. Any speed benefit needs measurement. |
 | The initial restart attempt returned HTTP 502; completion timing and cause were uncertain | Record confirmed restart completion and correlate proxy, worker, and application logs; improve readiness/model initialization if that evidence identifies a startup gap. |
-| Full local answer generation failed with `API_KEY_INVALID` | Supply a valid exported local `GEMINI_API_KEY` and repeat the local smoke check when resuming. The hosted key worked. |
+| An earlier local generation check returned `API_KEY_INVALID`; a later clean-checkout check did not exercise generation | The owner reports the key works and chose to skip another local test. A campus-answer request with a valid exported key would close this verification gap. The hosted key worked. |
 | No measured improvement or second formal trial set | Implement one small change and repeat the frozen three-trial protocol on a separately named version. This has not been done. |
 
 **Why I stopped:** I did not have enough time, and I chose not to do the improvement/retest cycle.

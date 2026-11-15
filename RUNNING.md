@@ -1,104 +1,110 @@
-# Running the Campus Life RAG
+# Running this project
+
+- [Original Project 1 CLI](#original-project-1-cli)
+- [Capstone: live app, Render, and local API](#capstone-running-it)
+
+## Original Project 1 CLI
+
+After dependency setup, the original CLI remains available:
+
+```bash
+python app.py --corpus campus_life index
+python app.py --corpus campus_life ask "When can students purchase a parking permit?"
+python app.py --corpus campus_life retrieve "When can students purchase a parking permit?"
+```
+
+The CLI uses Chroma's normal home cache unless `AI201_EMBED_CACHE_DIR` is set.
+Use the build script when preparing assets for `sh start.sh`. `python serve.py`
+is a local Flask development server, while `sh start.sh` is the tested Gunicorn
+start path. Do not run `run_eval.py` as part of this smoke check; formal trials
+remain separate.
+
+---
 
 ## Capstone: Running It
 
-CodePath AI201 Project 1 extension: **Shape A — Deploy and instrument; Path A — Hosted**.
-The existing Flask API calls the original `app.py::ask_pipeline`.
+**Shape A: Deploy and instrument · Path A: Hosted on Render.**
+The HTTP API uses the original `app.py::ask_pipeline`.
 
-### 1. Try the live app
+- [Try the live app](#try-the-live-app)
+- [Render settings](#render-settings)
+- [Run the API locally](#run-the-api-locally)
+- [Dependencies and model assets](#dependencies-and-model-assets)
+- [Verification and logs](#verification-and-logs)
 
-**Render URL:** https://campus-life-rag.onrender.com
+### Try the live app
 
-This is a JSON API. Use `/ask` for questions; the root `/` has no form.
+**Live URL:** https://campus-life-rag.onrender.com
 
-```bash
-curl --silent --show-error --max-time 55 \
-  --request POST https://campus-life-rag.onrender.com/ask \
-  --header 'Content-Type: application/json' \
-  --data '{"question":"When can students purchase a parking permit?"}'
+Send a question with **POST `/ask`**. There is no question form at `/`.
+
+**PowerShell — paste this whole line:**
+
+```powershell
+'{"question":"What account do students need to access campus Wi-Fi?"}' | curl.exe --include --max-time 180 --request POST "https://campus-life-rag.onrender.com/ask" --header "Content-Type: application/json" --data-binary "@-"
 ```
 
-The endpoint is **POST `/ask`**, with a JSON body containing `question`.
-Verified on November 14, 2026 (Pacific): **HTTP 200**, with this actual answer:
-
-> Student permits for the west lots go on sale in August (admin_parking_permits.txt).
-
-The response had `refused: false`, `best_distance: 0.4196`, `threshold: 0.6`,
-and `admin_parking_permits.txt` among its sources. Client elapsed time was
-**15.765645 seconds**; initial cold/warm state was unknown. This was a functional
-check, not another formal latency trial.
-
-Readiness check:
+**Bash / Linux / WSL:**
 
 ```bash
-curl --silent --show-error --max-time 55 \
-  https://campus-life-rag.onrender.com/health
+curl --include --max-time 180 -X POST https://campus-life-rag.onrender.com/ask -H 'Content-Type: application/json' -d '{"question":"What account do students need to access campus Wi-Fi?"}'
 ```
 
-Verified response: HTTP 200 with `corpus: campus_life`, `status: ok`,
-`detail: ready`, and **`index_ready: true`**. That flag confirms the index,
-not that the embedding model is already loaded or a Gemini call will succeed.
-First requests can be slower while the free service starts or loads assets.
+Verified live: **HTTP 200**, `refused: false`, and this answer:
 
-### 2. Reproduce the Render configuration
+> Students need a student account to access campus Wi-Fi.
+>
+> Source: admin_wifi_and_accounts.txt
 
-The owner reports that the existing service uses this repository's configuration.
-The following settings are read from `render.yaml` and the scripts; they have
-not been independently copied from the current Render dashboard.
+Check index readiness with **GET `/health`**:
 
-| Setting | Repository configuration |
+```powershell
+curl.exe --max-time 180 https://campus-life-rag.onrender.com/health
+```
+
+In Bash, use `curl` instead of `curl.exe`. Expect HTTP 200 and
+`index_ready: true`. A sleeping free service or first model load may take longer.
+
+### Render settings
+
+Use the existing **campus-life-rag** service and repository-root `render.yaml`.
+
+| Setting | Command / configuration |
 | --- | --- |
-| Service | Existing `campus-life-rag` Render Web Service |
 | Runtime / plan | Python / Free |
-| Root directory | Repository root, containing `render.yaml` |
-| Python | `3.13.7` from `.python-version` |
-| Build command | `sh build.sh` |
-| Start command | `sh start.sh` |
-| Health check path | `/health` |
+| Python pin | 3.13.7 (`.python-version`) |
+| Build Command | `sh build.sh` — installs dependencies, rebuilds portable HNSW, downloads the model, and indexes the corpus |
+| Start Command | `sh start.sh` — starts one Gunicorn worker serving `serve:app` |
+| Health Check Path | `/health` |
+| Port binding | `0.0.0.0:${PORT:-5000}`; Render supplies `PORT` |
 | Automatic deploys | Off |
 
-`build.sh` installs the exact direct dependency pins, rebuilds
-`chroma-hnswlib` for a portable CPU target, checks dependencies/imports, and
-builds the index and model cache. `start.sh` checks the key and built index,
-then launches one Gunicorn worker serving `serve:app`, bound to `0.0.0.0` on
-Render's supplied port. Startup does not repeat corpus indexing.
+The owner confirmed Live commit `1694a57b3e19cebdcb769480faf6480a491f92d9`
+and matching repository settings. Dashboard overrides and the current hosted
+Python build-log version were not independently inspected.
 
-**Environment variable names only:** set manual variables in
-**Render Dashboard → campus-life-rag → Environment**. Keep non-secret settings
-from `render.yaml`; supply the API key privately. No credential values belong
-in Git, this guide, screenshots, or chat.
+Set variables in **Render → campus-life-rag → Environment**. Names only:
 
-| Name | Required / where it comes from |
+| Name | Purpose |
 | --- | --- |
-| `GEMINI_API_KEY` | Required secret; enter privately in Render Environment. |
-| `AI201_CORPUS` | Non-secret selection defined in `render.yaml`; scripts also have a default. |
-| `AI201_CACHE` | Non-secret response-cache setting defined in `render.yaml`. |
-| `AI201_EMBED_BATCH_SIZE` | Non-secret memory-control setting defined in `render.yaml`. |
-| `AI201_MODEL` | Optional override supported by `config.py`; only set if needed. |
-| `PORT` | Supplied by Render; do not replace it to fix a startup failure. |
-| `PYTHON_VERSION` | Optional Render override, if present; it must agree with the intended Python pin. |
+| `GEMINI_API_KEY` | Required secret; enter privately |
+| `AI201_CORPUS` | Corpus selection from `render.yaml` |
+| `AI201_CACHE` | Cache setting from `render.yaml` |
+| `AI201_EMBED_BATCH_SIZE` | Memory-control setting from `render.yaml` |
+| `AI201_MODEL` | Optional hosted Gemini model override |
+| `PORT` | Provided by Render |
+| `PYTHON_VERSION` | Optional override; must agree with the intended Python pin |
 
-The scripts set `AI201_EMBED_CACHE_DIR`, `PYTHONUNBUFFERED`, and
-`PYTHONFAULTHANDLER` themselves. `build.sh` sets `HNSWLIB_NO_NATIVE` for the
-portable native build. Do not enable the staff-only `AI201_FAKE_EMBEDDINGS`.
+Scripts set `AI201_EMBED_CACHE_DIR`, `PYTHONUNBUFFERED`, and
+`PYTHONFAULTHANDLER`; the build also sets `HNSWLIB_NO_NATIVE`.
+Keep credentials out of Git. Do not enable `AI201_FAKE_EMBEDDINGS` for real runs.
 
-**Still needed for independent dashboard verification:** copy the currently
-Live deploy's full Git SHA, Settings → **Build Command**, **Start Command**,
-**Runtime**, **Instance Type**, and **Health Check Path**; the Python version
-line from that successful build; and Environment **names only**. The public
-API does not expose these settings or its Git SHA. Earlier baseline revision
-`1694a57` was user-attested; the clean checkout below is a repository revision,
-not proof of what Render is currently running. Do not send secret values.
+### Run the API locally
 
-### 3. Run locally after a clean setup
+**Use Python 3.13.7 on Linux or WSL**, with a C++ compiler and matching Python
+development headers. Run these commands from the repository root.
 
-**Tested environment:** CPython **3.13.7**, Linux x86_64, Debian Bookworm.
-Use Linux or WSL for this Gunicorn path. Native Windows and macOS were not tested.
-A C++ compiler, matching Python development headers, outbound package/model
-access, and writable repository/cache directories are needed.
-
-From a fresh clone, select Python 3.13.7 first. `.python-version` records the
-version but does not install it. Then run from the repository root:
+**1. Create an environment and prepare dependencies, model, and index:**
 
 ```bash
 python --version
@@ -107,14 +113,7 @@ python -m venv .venv
 sh build.sh
 ```
 
-`sh build.sh` is the dependency installation and asset-preparation command.
-It runs `python -m pip install -r requirements-runtime.txt`, rebuilds the
-portable native library, runs `pip check`, and indexes the corpus. Expect
-`No broken requirements found`, `hnswlib import OK`, and `stored 183 chunks`.
-
-Provide a valid Gemini API key **locally**. Having it only in Render does not
-make it available on your laptop. In Bash, enter it without recording the
-value in a command-history assignment:
+**2. Enter the API key privately and export it:**
 
 ```bash
 read -r -s -p 'Gemini API key: ' GEMINI_API_KEY
@@ -122,24 +121,23 @@ printf '\n'
 export GEMINI_API_KEY
 ```
 
-**Exact start command after setup**, with the virtual environment active:
+`start.sh` requires an exported key; it does not load `.env` itself.
+
+**3. Start the API with the virtual environment active:**
 
 ```bash
 sh start.sh
 ```
 
-It listens on `http://127.0.0.1:5000` unless a port is supplied. In another
-terminal, use the live curl commands above with that local origin. A valid
-local key is needed for an in-corpus generated answer.
+Local URL: **http://127.0.0.1:5000**. In another terminal, use the request
+above with this local URL. Startup reuses the built index and model assets.
 
-The shell script requires an **exported** key; it does not source `.env`.
-Although `config.py` supports an ignored `.env` for CLI/development use,
-a file alone does not satisfy `start.sh`'s shell-level check. Keep `.env`,
-`.venv`, model assets, and `chroma_db/` out of Git.
+### Dependencies and model assets
 
-#### Pinned dependencies
+`sh build.sh` installs `requirements-runtime.txt` with `requirements.txt`
+constraints, then rebuilds `chroma-hnswlib`. Direct pins:
 
-| Package | Exact runtime pin |
+| Package | Version |
 | --- | --- |
 | python-dotenv | 1.1.1 |
 | chromadb | 0.6.3 |
@@ -148,72 +146,46 @@ a file alone does not satisfy `start.sh`'s shell-level check. Keep `.env`,
 | rank-bm25 | 0.2.2 |
 | Flask | 3.1.3 |
 | Gunicorn | 23.0.0 |
-| chroma-hnswlib | 0.7.6, explicitly rebuilt by `build.sh` |
+| chroma-hnswlib | 0.7.6, rebuilt from source |
 
-`requirements-runtime.txt` retains the course ranges as constraints. These
-are direct pins, **not a complete transitive lockfile**. The clean test also
-resolved ONNX Runtime 1.32.0 and NumPy 2.5.4; those are observed versions,
-not additional pins. Installing only the course ranges skips the exact direct
-pins and portable-native rebuild used by the documented build path.
+Transitive dependencies are not fully locked. The clean build resolved
+ONNX Runtime 1.32.0 and NumPy 2.5.4.
 
-#### Required model assets
+The build automatically downloads **all-MiniLM-L6-v2** for local ONNX
+embeddings to `.cache/embedding-models/all-MiniLM-L6-v2/`.
 
-Embeddings use **all-MiniLM-L6-v2**, a local ONNX model producing 384-dimensional
-vectors. The build downloads its archive from:
-`https://chroma-onnx-models.s3.amazonaws.com/all-MiniLM-L6-v2/onnx.tar.gz`.
-No manual model-file copy is required. Measured clean-download sizes:
-
-| File | Bytes |
+| Asset | Measured size |
 | --- | ---: |
-| `onnx.tar.gz` | 83,178,821 |
-| `onnx/model.onnx` | 90,387,606 |
-| `onnx/tokenizer.json` | 711,661 |
-| `onnx/vocab.txt` | 231,508 |
-| `onnx/config.json` | 650 |
-| `onnx/tokenizer_config.json` | 518 |
-| `onnx/special_tokens_map.json` | 125 |
+| Download archive | 83,178,821 bytes (79.33 MiB) |
+| `onnx/model.onnx` | 90,387,606 bytes (86.20 MiB) |
+| All extracted files, including tokenizer/config files | 91,332,068 bytes (87.10 MiB) |
+| Archive + extracted cache | 174,510,889 bytes (166.43 MiB) |
+| Generated `chroma_db/` index | 2,593,508 bytes (2.47 MiB) |
 
-The archive is **79.33 MiB**; extracted files total **87.10 MiB**. Both are
-retained, requiring about **166.43 MiB** of model-cache disk space, plus the
-index and Python packages. The clean index occupied about **2.47 MiB**.
-These are disk sizes, not RAM requirements.
+Required companions: `tokenizer.json`, `vocab.txt`, `config.json`,
+`tokenizer_config.json`, and `special_tokens_map.json`. These are disk sizes;
+peak hosted RAM against the 512 MiB limit remains unmeasured. Generation uses
+the hosted Gemini API; no local generation weights are needed.
 
-Both scripts use `.cache/embedding-models/all-MiniLM-L6-v2/` in the build/runtime
-artifact and `chroma_db/` for the generated index. The corpus documents are
-already tracked under `corpora/campus_life/documents/`. Generation uses Google's
-hosted Gemini API; `config.py` defaults to `gemini-3.5-flash-lite`. No local
-Gemini weights, sentence-transformers, or PyTorch installation is required.
+### Verification and logs
 
-#### Clean-checkout verification
-
-A new separate clone of **`5e26c4718212816f89e888f8ec7b65208bc66ec1`** was made at
-`/tmp/ai201-running-check-kaTjmf/repo`. No dependency environment, index, model
-cache, or credentials were copied from the working repo. The following
-commands were actually exercised in the fresh Python 3.13.7 container:
+Clean checkout tested: `5e26c4718212816f89e888f8ec7b65208bc66ec1`,
+CPython 3.13.7, Debian Bookworm x86_64, in a separate clone.
 
 | Check | Result |
 | --- | --- |
-| Create and activate a venv | Passed; system site-packages disabled. |
-| `sh build.sh` | Passed pinned install, portable compilation/import, and dependency check. |
-| Real model download and index build | Passed: 88 documents → 183 chunks. |
-| `sh start.sh` | Passed; Gunicorn started on the local port. |
-| Local `/health` | HTTP 200, `index_ready: true`. |
-| Local `/ask` with an unrelated question | HTTP 200, exact refusal, `refused: true`, and an application request ID. Real ONNX retrieval was used. |
-| Health after the request | HTTP 200; no OOM kills in the 512 MiB runtime container. |
+| Venv, `sh build.sh`, model download and indexing | Passed; 88 documents → 183 chunks |
+| `sh start.sh` and `/health` | Passed; `index_ready: true` |
+| Local unsupported question using real ONNX retrieval | HTTP 200, `refused: true`, matching request ID |
+| Runtime container limited to 512 MiB | Remained healthy; no OOM kills during the check |
+| Full local generated campus answer | Not verified with a valid key; owner requested skipping the additional check |
+| Live campus answer | HTTP 200; actual answer shown above |
 
-A placeholder key was used only to satisfy the startup guard. The unrelated
-question was rejected before Gemini generation, so **full local generated
-answers were not tested with a valid key**. The real campus answer was verified
-at the live Render URL instead. Peak hosted RAM, concurrent traffic, a new
-Render deployment, and native Windows/macOS startup were not tested. The
-container's build phase was not constrained to 512 MiB. This was a functional
-setup check, not a repetition of formal acceptance trials.
+The local refusal check used a placeholder key and skipped Gemini generation.
+The build was not memory-limited. Native Windows/macOS startup and concurrent
+traffic were not tested.
 
-### Logs and further evidence
-
-In the existing Render service's **Logs** page, search for `rag_request`.
-Every `POST /ask` logs one JSON completion record; its `request_id` matches
-the response's `X-Request-ID`. Health traffic is separate. The original
-baseline results, log tables, cost measurements, and submission limitations
-remain in the README and linked `results/` evidence. This guide does not
-create another Render service, trigger a deploy, or perform Git actions.
+**Read logs:** Render → campus-life-rag → **Logs**, search `rag_request`.
+Each completed `POST /ask` emits JSON; match its `request_id` to the response's
+`X-Request-ID`. See [README Capstone](README.md#capstone) for log evidence,
+cost measurements, and formal results.

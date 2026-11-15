@@ -102,7 +102,15 @@ Keep credentials out of Git. Do not enable `AI201_FAKE_EMBEDDINGS` for real runs
 ### Run the API locally
 
 **Use Python 3.13.7 on Linux or WSL**, with a C++ compiler and matching Python
-development headers. Run these commands from the repository root.
+development headers. `.python-version` records the version; it does not install
+Python. Start with a fresh clone (or use your existing repository):
+
+```bash
+git clone https://github.com/penthra/ai201-project1-unofficial-guide-starter-v2026.git
+cd ai201-project1-unofficial-guide-starter-v2026
+```
+
+Run the following in Bash from the repository root.
 
 **1. Create an environment and prepare dependencies, model, and index:**
 
@@ -110,8 +118,14 @@ development headers. Run these commands from the repository root.
 python --version
 python -m venv .venv
 . .venv/bin/activate
+export AI201_CORPUS=campus_life
+export AI201_CACHE=0
+export AI201_EMBED_BATCH_SIZE=1
 sh build.sh
 ```
+
+These exports match the hosted corpus, disabled response cache, and embedding
+batch size. The build needs internet access to install packages and download assets.
 
 **2. Enter the API key privately and export it:**
 
@@ -129,8 +143,15 @@ export GEMINI_API_KEY
 sh start.sh
 ```
 
-Local URL: **http://127.0.0.1:5000**. In another terminal, use the request
-above with this local URL. Startup reuses the built index and model assets.
+Local URL: **http://127.0.0.1:5000** (default port). Startup reuses the built
+index and model assets. In another Bash terminal, send a local question:
+
+```bash
+curl --include --max-time 180 -X POST http://127.0.0.1:5000/ask -H 'Content-Type: application/json' -d '{"question":"What account do students need to access campus Wi-Fi?"}'
+```
+
+Expect HTTP 200 with `answer`, `sources`, and `refused`. Press **Ctrl+C** in
+the server terminal to stop it.
 
 ### Dependencies and model assets
 
@@ -187,5 +208,6 @@ traffic were not tested.
 
 **Read logs:** Render → campus-life-rag → **Logs**, search `rag_request`.
 Each completed `POST /ask` emits JSON; match its `request_id` to the response's
-`X-Request-ID`. See [README Capstone](README.md#capstone) for log evidence,
+`X-Request-ID`. Copy needed JSON records promptly; free-host logs may not persist.
+See [README Capstone](README.md#capstone) for log evidence,
 cost measurements, and formal results.
